@@ -21,12 +21,13 @@ async def send_pipeline_webhook(
     stage: str,
     progress: int,
     source_id: Optional[str] = None,
-    error: Optional[str] = None
+    error: Optional[str] = None,
+    data: Optional[Dict[str, Any]] = None
 ) -> None:
     """
     Sends an HMAC-SHA256 signed webhook notification to the Express backend.
     """
-    payload = {
+    payload: Dict[str, Any] = {
         "jobId": job_id,
         "projectId": project_id,
         "stage": stage,
@@ -34,6 +35,8 @@ async def send_pipeline_webhook(
         "sourceId": source_id,
         "error": error
     }
+    if data is not None:
+        payload["data"] = data
 
     raw_bytes = json.dumps(payload).encode("utf-8")
     signature = generate_webhook_signature(raw_bytes)

@@ -61,13 +61,32 @@ def get_chunks_by_source(source_id: str) -> List[Dict[str, Any]]:
 
 
 def get_chunks_by_sources(source_ids: List[str]) -> List[Dict[str, Any]]:
-  """Retrieves all chunks belonging to an allowed list of source IDs."""
-  if not source_ids:
-    return []
-  try:
-    collection = get_chunks_collection()
-    cursor = collection.find({"sourceId": {"$in": source_ids}}).sort("order", 1)
-    return list(cursor)
-  except Exception:
-    return []
+    """
+    Retrieves all chunks belonging to an allowed list of source IDs.
+    """
+    if not source_ids:
+        return []
+    try:
+        collection = get_chunks_collection()
+        cursor = collection.find({"sourceId": {"$in": source_ids}}).sort("order", 1)
+        return list(cursor)
+    except Exception:
+        return []
+
+
+def get_chunks_by_project(project_id: str, source_ids: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    """
+    Retrieves all chunks for a project, optionally filtered by allowed source IDs.
+    """
+    try:
+        collection = get_chunks_collection()
+        query: Dict[str, Any] = {"projectId": project_id}
+        if source_ids is not None:
+            query["sourceId"] = {"$in": source_ids}
+        cursor = collection.find(query).sort("order", 1)
+        return list(cursor)
+    except Exception as e:
+        print(f"[ChunkStore] Error retrieving chunks for project {project_id}: {e}")
+        return []
+
 

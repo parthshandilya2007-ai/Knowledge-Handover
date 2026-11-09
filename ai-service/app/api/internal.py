@@ -4,6 +4,7 @@ from typing import Optional, List, Dict, Any
 from app.config import settings
 from app.pipeline.chunk_store import delete_chunks_by_source
 from app.pipeline.ingest import ingest_source_pipeline
+from app.pipeline.pipeline_runner import run_project_analysis_pipeline
 from app.pipeline.parsers.github_parser import GithubItemInput
 from app.security import generate_webhook_signature, verify_internal_key
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -70,6 +71,35 @@ async def ingest_source(
             "accepted": True,
             "sourceId": payload.sourceId,
             "message": "Ingestion job queued",
+        },
+    }
+
+
+class PipelineRunRequest(BaseModel):
+    jobId: str
+    projectId: str
+    sourceIds: Optional[List[str]] = None
+
+
+@router.post("/pipeline/run", dependencies=[Depends(verify_internal_key)])
+async def run_pipeline(
+    payload: PipelineRunRequest, background_tasks: BackgroundTasks
+):
+    """Trigger extraction, reconciliation, and persistence pipeline in the background."""
+    background_tasks.add_task(
+        run_project_analysis_pipeline,
+        job_id=payload.jobId,
+        project_id=payload.projectId,
+        source_ids=payload.sourceIds,
+    )
+
+    return {
+        "ok": True,
+        "data": {
+            "accepted": True,
+            "jobId": payload.jobId,
+            "projectId": payload.projectId,
+            "message": "Project analysis job queued",
         },
     }
 

@@ -1,6 +1,9 @@
 import { Response } from "express";
+import { Types } from "mongoose";
 import { RequestWithRawBody } from "../middleware/internalAuth.js";
 import { Source, SourceStatus } from "../models/Source.js";
+import { ProcessingJob } from "../models/ProcessingJob.js";
+import { processingService } from "../services/processing.service.js";
 import { sendSuccess, sendError } from "../utils/response.js";
 import { getIO } from "../sockets/socketServer.js";
 
@@ -11,6 +14,7 @@ export interface PipelineWebhookBody {
   progress: number;
   sourceId?: string;
   error?: string;
+  data?: any;
   results?: {
     facts?: unknown[];
     evidence?: unknown[];
@@ -54,6 +58,43 @@ export async function handlePipelineWebhook(req: RequestWithRawBody, res: Respon
       }
     } catch (err) {
       console.error("[PipelineWebhook] Error updating source status:", err);
+    }
+  } else {
+    // Project-level pipeline analysis job (stages 5-7: extracting, reconciling, persisting, completed, failed)
+    try {
+      let job: any = null;
+      if (Types.ObjectId.isValid(payload.jobId)) {
+        job = await ProcessingJob.findById(payload.jobId);
+      }
+      if (job) {
+        if (payload.stage === "completed") {
+          job.status = "completed";
+          job.currentStage = "completed";
+          job.progress = 100;
+        } else if (payload.stage === "failed") {
+          job.status = "failed";
+          job.currentStage = "failed";
+          job.error = payload.error;
+        } else {
+          job.currentStage = payload.stage as any;
+          job.progress = payload.progress;
+        }
+        await job.save();
+      }
+
+      getIO()?.to(`project:${payload.projectId}`).emit("pipeline:progress", {
+        jobId: payload.jobId,
+        projectId: payload.projectId,
+        stage: payload.stage,
+        progress: payload.progress,
+        error: payload.error
+      });
+
+      if (payload.data && (payload.stage === "persisting" || payload.stage === "completed")) {
+        await processingService.persistReconciledFacts(payload.jobId, payload.projectId, payload.data);
+      }
+    } catch (err) {
+      console.error("[PipelineWebhook] Error handling project pipeline webhook:", err);
     }
   }
 

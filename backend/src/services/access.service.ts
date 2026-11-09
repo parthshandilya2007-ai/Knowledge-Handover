@@ -77,11 +77,16 @@ export class AccessService {
   async filterFactsForUser<T extends IFactBase>(userId: string, projectId: string, facts: T[]): Promise<T[]> {
     const allowedSourceIds = new Set(await this.getAllowedSourceIds(userId, projectId));
 
-    // Gather all evidence IDs from all facts
+    // Gather all evidence IDs from all facts (handling both populated objects and raw ObjectIds)
     const allEvidenceIds: Types.ObjectId[] = [];
     for (const fact of facts) {
       if (fact.evidenceIds && fact.evidenceIds.length > 0) {
-        allEvidenceIds.push(...fact.evidenceIds);
+        for (const ev of fact.evidenceIds) {
+          const rawId = (ev as any)?._id || ev;
+          if (rawId && Types.ObjectId.isValid(rawId)) {
+            allEvidenceIds.push(new Types.ObjectId(rawId));
+          }
+        }
       }
     }
 
@@ -108,8 +113,13 @@ export class AccessService {
       }
 
       // Check every evidence item
-      for (const evId of fact.evidenceIds) {
-        const sourceId = evidenceToSourceMap.get(evId.toString());
+      for (const ev of fact.evidenceIds) {
+        const idStr = ((ev as any)?._id || ev).toString();
+        const rawSourceId = (ev as any)?.sourceId;
+        const sourceId = rawSourceId
+          ? ((rawSourceId as any)?._id || rawSourceId).toString()
+          : evidenceToSourceMap.get(idStr);
+
         if (!sourceId || !allowedSourceIds.has(sourceId)) {
           return false; // Denied: at least one source is not accessible
         }

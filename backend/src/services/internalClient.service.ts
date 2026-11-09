@@ -106,6 +106,32 @@ export class InternalClientService {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   }
+
+  async runPipeline(payload: {
+    jobId: string;
+    projectId: string;
+    sourceIds?: string[];
+  }): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/internal/pipeline/run`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Internal-Key": this.internalKey
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        return { success: false, error: `AI Service HTTP ${response.status}: ${text}` };
+      }
+
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  }
 }
 
 export const internalClient = new InternalClientService();

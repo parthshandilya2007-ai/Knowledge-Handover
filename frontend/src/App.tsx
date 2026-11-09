@@ -15,6 +15,7 @@ import { ProjectsPage } from "./pages/ProjectsPage";
 import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SourcesPage } from "./pages/SourcesPage";
+import { ProcessingPage } from "./pages/ProcessingPage";
 import { StagePlaceholderPage } from "./pages/StagePlaceholderPage";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -151,11 +152,7 @@ export function App() {
             element={
               <ProtectedRoute>
                 <AppLayout>
-                  <StagePlaceholderPage
-                    stageNumber={5}
-                    title="AI Processing Pipeline"
-                    description="Run background extraction jobs, verify verbatim quotes against source chunks, and detect conflicting claims across artifacts."
-                  />
+                  <ProcessingPage />
                 </AppLayout>
               </ProtectedRoute>
             }
