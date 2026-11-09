@@ -24,3 +24,4 @@ router.post("/:id/members", requireProjectAccess("manager"), addMember);
 router.delete("/:id/members/:userId", requireProjectAccess("manager"), removeMember);
 
 export { router as projectRouter };
+

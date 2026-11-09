@@ -20,3 +20,4 @@ export const updateMemberRoleSchema = z.object({
 export type CreateOrgInput = z.infer<typeof createOrgSchema>;
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
 export type UpdateMemberRoleInput = z.infer<typeof updateMemberRoleSchema>;
+

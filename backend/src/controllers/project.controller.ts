@@ -74,3 +74,4 @@ export async function removeMember(req: AuthenticatedRequest, res: Response, nex
     next(err);
   }
 }
+

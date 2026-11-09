@@ -47,3 +47,4 @@ export async function updateMemberRole(req: AuthenticatedRequest, res: Response,
     next(err);
   }
 }
+

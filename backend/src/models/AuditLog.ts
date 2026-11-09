@@ -33,3 +33,4 @@ const auditLogSchema = new Schema<IAuditLog>(
 );
 
 export const AuditLog = mongoose.model<IAuditLog>("AuditLog", auditLogSchema);
+

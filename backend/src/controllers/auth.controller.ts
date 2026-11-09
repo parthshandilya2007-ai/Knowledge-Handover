@@ -134,3 +134,4 @@ export async function updateMe(req: AuthenticatedRequest, res: Response, next: N
     next(err);
   }
 }
+

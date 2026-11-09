@@ -9,7 +9,8 @@
     "start:frontend": "npm --prefix frontend run dev",
     "test:backend": "npm --prefix backend test",
     "test:ai": "cd ai-service && .venv\\Scripts\\pytest app/tests",
-    "verify:stage0": "npx --prefix backend tsx ../scripts/verify-stage0.ts"
+    "verify:stage0": "npx --prefix backend tsx ../scripts/verify-stage0.ts",
+    "verify:stage2": "npx --prefix backend tsx ../scripts/verify-stage2.ts"
   }
 }
 

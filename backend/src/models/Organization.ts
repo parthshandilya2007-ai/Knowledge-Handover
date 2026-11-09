@@ -73,3 +73,4 @@ const organizationSchema = new Schema<IOrganization>(
 organizationSchema.index({ "members.userId": 1 });
 
 export const Organization = mongoose.model<IOrganization>("Organization", organizationSchema);
+

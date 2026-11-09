@@ -9,3 +9,4 @@ router.get("/me", getMe);
 router.patch("/me", updateMe);
 
 export { router as userRouter };
+

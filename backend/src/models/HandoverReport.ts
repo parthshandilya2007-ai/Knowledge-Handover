@@ -129,3 +129,4 @@ const handoverReportSchema = new Schema<IHandoverReport>(
 handoverReportSchema.index({ projectId: 1, version: 1 }, { unique: true });
 
 export const HandoverReport = mongoose.model<IHandoverReport>("HandoverReport", handoverReportSchema);
+

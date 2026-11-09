@@ -49,3 +49,4 @@ projectSchema.index({ orgId: 1, name: 1 });
 projectSchema.index({ "members.userId": 1 });
 
 export const Project = mongoose.model<IProject>("Project", projectSchema);
+

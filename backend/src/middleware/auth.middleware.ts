@@ -35,3 +35,4 @@ export async function requireAuth(
     sendError(res, "UNAUTHORIZED", "Invalid or expired access token", 401);
   }
 }
+
