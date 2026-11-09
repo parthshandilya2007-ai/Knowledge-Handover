@@ -74,3 +74,4 @@ interface IAccessService {
   filterReportForUser(userId: string, report: IHandoverReport): Promise<IHandoverReport>;
 }
 ```
+

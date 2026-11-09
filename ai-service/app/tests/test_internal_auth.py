@@ -39,3 +39,4 @@ def test_internal_health_unauthorized_wrong_key():
     data = response.json()
     assert data["detail"]["ok"] is False
     assert data["detail"]["error"]["code"] == "UNAUTHORIZED"
+

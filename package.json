@@ -12,3 +12,4 @@
     "verify:stage0": "npx --prefix backend tsx ../scripts/verify-stage0.ts"
   }
 }
+

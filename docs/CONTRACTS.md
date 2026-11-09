@@ -377,3 +377,4 @@ Internal endpoints are protected by shared secrets and are **never** accessible 
   - `source:updated`: `{ sourceId, status }`
   - `report:updated`: `{ reportId, version, status }`
   - `notification:new`: `{ notification }`
+

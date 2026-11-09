@@ -41,3 +41,4 @@ def verify_webhook_signature(payload_bytes: bytes, signature_header: str) -> boo
         hashlib.sha256
     ).hexdigest()
     return hmac.compare_digest(calculated_sig, expected_sig)
+

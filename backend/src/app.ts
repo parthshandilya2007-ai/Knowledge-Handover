@@ -49,3 +49,4 @@ app.use("/internal", internalRouter);
 app.use(errorHandler);
 
 export { app };
+

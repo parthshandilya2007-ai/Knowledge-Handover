@@ -111,3 +111,4 @@ flowchart TD
    - FastAPI webhook callbacks to Express carry `X-Signature: sha256=<HMAC>` calculated with `WEBHOOK_HMAC_SECRET`.
 4. **Verbatim Quote Verification:** Every extracted claim must provide a quote that matches a verbatim substring of the source chunk (whitespace normalized). Unsupported claims are either dropped or flagged `uncertain`.
 5. **Human Lock:** Human approvals or manual edits lock facts from automated AI overwrite on subsequent re-runs.
+

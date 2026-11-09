@@ -18,3 +18,4 @@ router.get("/health", requireInternalKey, (req: Request, res: Response) => {
 router.post("/webhooks/pipeline", requireWebhookSignature, handlePipelineWebhook);
 
 export { router as internalRouter };
+

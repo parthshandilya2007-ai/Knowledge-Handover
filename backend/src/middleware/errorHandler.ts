@@ -36,3 +36,4 @@ export function errorHandler(
   console.error("Unhandled error:", err);
   sendError(res, "INTERNAL_ERROR", "An internal server error occurred", 500);
 }
+
