@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { requireWebhookSignature, requireInternalKey } from "../middleware/internalAuth.js";
 import { handlePipelineWebhook } from "../controllers/internalWebhook.controller.js";
+import { getInternalFile } from "../controllers/source.controller.js";
 import { sendSuccess } from "../utils/response.js";
 
 const router = Router();
@@ -13,6 +14,9 @@ router.get("/health", requireInternalKey, (req: Request, res: Response) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Internal file download for AI service: GET /internal/files/:sourceId
+router.get("/files/:sourceId", requireInternalKey, getInternalFile);
 
 // Webhook endpoint called by FastAPI with HMAC signature verification
 router.post("/webhooks/pipeline", requireWebhookSignature, handlePipelineWebhook);

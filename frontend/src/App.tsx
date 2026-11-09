@@ -14,6 +14,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { SourcesPage } from "./pages/SourcesPage";
 import { StagePlaceholderPage } from "./pages/StagePlaceholderPage";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -139,11 +140,7 @@ export function App() {
             element={
               <ProtectedRoute>
                 <AppLayout>
-                  <StagePlaceholderPage
-                    stageNumber={3}
-                    title="Knowledge Collection"
-                    description="Upload source documents (PDF, DOCX, TXT), connect GitHub repositories, and record meeting notes to index in Atlas Vector Search."
-                  />
+                  <SourcesPage />
                 </AppLayout>
               </ProtectedRoute>
             }

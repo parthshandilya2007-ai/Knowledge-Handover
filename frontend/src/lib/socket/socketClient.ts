@@ -55,3 +55,4 @@ export function leaveProjectRoom(projectId: string): void {
     socket.emit("leave_project", { projectId });
   }
 }
+

@@ -6,6 +6,9 @@ import { app } from "../app.js";
 let mongoServer: MongoMemoryServer;
 
 beforeAll(async () => {
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
   mongoServer = await MongoMemoryServer.create();
   const uri = mongoServer.getUri();
   await mongoose.connect(uri);
@@ -125,3 +128,4 @@ describe("Stage 2: Frontend Journey & API Contracts", () => {
     expect(patchRes.body.data.user.name).toBe("Principal Architect");
   });
 });
+

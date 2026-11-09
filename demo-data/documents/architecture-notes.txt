@@ -1,0 +1,7 @@
+# Architecture Notes: Knowledge Handover Engine
+
+## Architecture Decisions
+1. Single Database Solution: We selected MongoDB Atlas to store both application documents and chunk vector embeddings via Atlas Vector Search.
+2. RBAC Enforcement: All data access MUST be mediated through accessService on the backend. No client-side permission filtering.
+3. Stateless AI Intelligence: FastAPI service performs parsing, chunking, and verbatim quote verification.
+4. Security: Restricted files are never served publicly. Internal requests between Express and FastAPI are signed with X-Internal-Key.

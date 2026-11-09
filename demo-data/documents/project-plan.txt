@@ -1,0 +1,14 @@
+# Project Handover Plan: Student Hackathon & Innovation Platform
+
+## Overview
+This platform automates team handovers when developers transition off projects. 
+
+## Objectives and Timeline
+- Milestone 1: Core API & RBAC authentication setup by Nov 15. Owner: Alex Rivera.
+- Milestone 2: Document parsing and vector indexing pipeline by Nov 20. Owner: Sarah Chen.
+- Milestone 3: Handover report generation and verification dashboard by Nov 30.
+
+## Database and Infrastructure
+Primary database: MongoDB Atlas Cluster.
+All collections and vector embeddings reside on MongoDB Atlas.
+The backend exposes REST APIs on port 5000 and the AI intelligence service runs on port 8000.

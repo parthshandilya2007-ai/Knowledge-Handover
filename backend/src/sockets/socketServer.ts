@@ -12,6 +12,12 @@ export interface AuthenticatedSocket extends Socket {
   };
 }
 
+let ioInstance: SocketIOServer | null = null;
+
+export function getIO(): SocketIOServer | null {
+  return ioInstance;
+}
+
 export function setupSocketIO(server: HttpServer): SocketIOServer {
   const io = new SocketIOServer(server, {
     cors: {
@@ -19,6 +25,8 @@ export function setupSocketIO(server: HttpServer): SocketIOServer {
       credentials: true
     }
   });
+
+  ioInstance = io;
 
   // JWT Authentication Middleware for Socket.IO
   io.use((socket: Socket, next: (err?: Error) => void) => {

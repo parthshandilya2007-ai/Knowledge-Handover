@@ -49,6 +49,55 @@ export class InternalClientService {
       };
     }
   }
+
+  async ingestSource(payload: {
+    sourceId: string;
+    projectId: string;
+    type: string;
+    title: string;
+    fileRef?: string;
+    text?: string;
+  }): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/internal/sources/ingest`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Internal-Key": this.internalKey
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        return { success: false, error: `AI Service HTTP ${response.status}: ${text}` };
+      }
+
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  }
+
+  async deleteSource(sourceId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/internal/sources/${sourceId}`, {
+        method: "DELETE",
+        headers: {
+          "X-Internal-Key": this.internalKey
+        }
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        return { success: false, error: `AI Service HTTP ${response.status}: ${text}` };
+      }
+
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  }
 }
 
 export const internalClient = new InternalClientService();

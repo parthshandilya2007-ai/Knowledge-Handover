@@ -121,3 +121,4 @@ export function Sidebar({ mobileOpen, setMobileOpen }: { mobileOpen: boolean; se
     </>
   );
 }
+

@@ -1,0 +1,14 @@
+Team Architecture Sync - October 15, 2026
+Attendees: Sarah Chen, Alex Rivera, Marcus Brody
+
+Discussion Points:
+1. Database Architecture Discussion:
+   During the meeting, Marcus raised concerns regarding complex joins and transactions.
+   Informal decision: We will use PostgreSQL as our primary database instead of MongoDB for core relational entities.
+   Sarah to draft the migration RFC.
+
+2. Ownership:
+   Owner: Alex Rivera is assigned to finalize the authentication service and JWT rotation by Friday.
+
+3. Open / Unanswered Questions:
+   Unanswered question: Who will be responsible for managing AWS backup snapshots and disaster recovery failover?
