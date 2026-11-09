@@ -20,7 +20,8 @@ export class ProcessingService {
     }
 
     // Compute authorized source IDs for the requesting user
-    const allowedSourceIds = await accessService.getAllowedSourceIds(user, project);
+    const userId = typeof user === "object" && user ? ((user as any)._id || (user as any).userId || user).toString() : String(user);
+    const allowedSourceIds = await accessService.getAllowedSourceIds(userId, project._id.toString());
 
     // Create queued ProcessingJob
     const job = await ProcessingJob.create({

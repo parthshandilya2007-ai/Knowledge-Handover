@@ -132,6 +132,39 @@ export class InternalClientService {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   }
+
+  async generateReport(payload: {
+    projectId: string;
+    projectName?: string;
+    facts: {
+      tasks: any[];
+      decisions: any[];
+      risks: any[];
+      dependencies: any[];
+    };
+    evidenceMap?: Record<string, any>;
+  }): Promise<{ success: boolean; data?: { projectId: string; sections: any[] }; error?: string }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/internal/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Internal-Key": this.internalKey
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        return { success: false, error: `AI Service HTTP ${response.status}: ${text}` };
+      }
+
+      const json = (await response.json()) as { ok: boolean; data: { projectId: string; sections: any[] } };
+      return { success: true, data: json.data };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  }
 }
 
 export const internalClient = new InternalClientService();

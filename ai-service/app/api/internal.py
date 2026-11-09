@@ -5,6 +5,8 @@ from app.config import settings
 from app.pipeline.chunk_store import delete_chunks_by_source
 from app.pipeline.ingest import ingest_source_pipeline
 from app.pipeline.pipeline_runner import run_project_analysis_pipeline
+from app.pipeline.generator.report_generator import generate_handover_report
+from app.schemas.generation import ReportGenerateRequest
 from app.pipeline.parsers.github_parser import GithubItemInput
 from app.security import generate_webhook_signature, verify_internal_key
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -111,6 +113,36 @@ async def delete_source_chunks(source_id: str):
   """Deletes all chunks in MongoDB for a specified source."""
   deleted_count = delete_chunks_by_source(source_id)
   return {"ok": True, "data": {"sourceId": source_id, "deleted": deleted_count}}
+
+
+@router.post("/generate", dependencies=[Depends(verify_internal_key)])
+async def generate_report_endpoint(payload: ReportGenerateRequest):
+    """Drafts an 11-section evidence-linked handover report from verified project facts."""
+    try:
+        sections = await generate_handover_report(
+            project_id=payload.projectId,
+            project_name=payload.projectName or "Project Handover",
+            facts=payload.facts,
+            evidence_map=payload.evidenceMap or {},
+        )
+        return {
+            "ok": True,
+            "data": {
+                "projectId": payload.projectId,
+                "sections": [s.model_dump() for s in sections],
+            },
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "ok": False,
+                "error": {
+                    "code": "GENERATION_FAILED",
+                    "message": f"Report generation failed: {str(e)}",
+                },
+            },
+        )
 
 
 @router.post(

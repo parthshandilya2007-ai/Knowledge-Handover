@@ -31,6 +31,7 @@ npm run verify:stage0
 - **Database & Vectors:** Unified MongoDB Atlas cluster hosting application data and the `chunks` collection with Atlas Vector Search (`$vectorSearch`).
 - **Single Permission Gate:** All authorization decisions are strictly evaluated in `accessService` on the backend. The AI service receives pre-filtered `allowedSourceIds`.
 - **Verbatim Quote Verification:** All extracted facts require verifiable verbatim quote substrings from source chunks. Unsupported claims are flagged `uncertain` or dropped.
+- **Evidence-Linked Handover Reports:** 11-section structured reports (Overview, Completed Work, Pending Work, Responsibilities, Decisions, Dependencies, Risks, Open Questions, Next Actions, First-Week Plan, Important Links) with citations, conflict detection, and viewer-level source redaction.
 
 For detailed architecture diagrams, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).  
 For the complete API contract and schema specifications, see [CONTRACTS.md](docs/CONTRACTS.md).  

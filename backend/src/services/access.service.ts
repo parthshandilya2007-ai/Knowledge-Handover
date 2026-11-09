@@ -8,19 +8,91 @@ import { IHandoverReport } from "../models/HandoverReport.js";
 
 export class AccessService {
   /**
+   * Checks if a user has access to view a project.
+   */
+  async canViewProject(userId: string | any, projectId: string | any): Promise<boolean> {
+    const uId = typeof userId === "object" && userId ? ((userId as any).userId || (userId as any)._id || userId).toString() : String(userId);
+    const pId = typeof projectId === "object" && projectId ? ((projectId as any)._id || projectId).toString() : String(projectId);
+
+    const project = await Project.findById(pId);
+    if (!project) return false;
+
+    const org = await Organization.findById(project.orgId);
+    if (!org) return false;
+
+    const orgMember = org.members.find((m) => m.userId.toString() === uId);
+    if (!orgMember) return false;
+
+    if (orgMember.role === "admin") return true;
+
+    return project.members.some((m) => m.userId.toString() === uId);
+  }
+
+  /**
+   * Checks if a user can contribute to a project (contributor or manager or org admin).
+   */
+  async canContributeProject(userId: string | any, projectId: string | any): Promise<boolean> {
+    const uId = typeof userId === "object" && userId ? ((userId as any).userId || (userId as any)._id || userId).toString() : String(userId);
+    const pId = typeof projectId === "object" && projectId ? ((projectId as any)._id || projectId).toString() : String(projectId);
+
+    const project = await Project.findById(pId);
+    if (!project) return false;
+
+    const org = await Organization.findById(project.orgId);
+    if (!org) return false;
+
+    const orgMember = org.members.find((m) => m.userId.toString() === uId);
+    if (!orgMember) return false;
+
+    if (orgMember.role === "admin") return true;
+
+    const projectMember = project.members.find((m) => m.userId.toString() === uId);
+    if (!projectMember) return false;
+
+    return projectMember.role === "contributor" || projectMember.role === "manager";
+  }
+
+  /**
+   * Checks if a user can manage a project (manager or org admin).
+   */
+  async canManageProject(userId: string | any, projectId: string | any): Promise<boolean> {
+    const uId = typeof userId === "object" && userId ? ((userId as any).userId || (userId as any)._id || userId).toString() : String(userId);
+    const pId = typeof projectId === "object" && projectId ? ((projectId as any)._id || projectId).toString() : String(projectId);
+
+    const project = await Project.findById(pId);
+    if (!project) return false;
+
+    const org = await Organization.findById(project.orgId);
+    if (!org) return false;
+
+    const orgMember = org.members.find((m) => m.userId.toString() === uId);
+    if (!orgMember) return false;
+
+    if (orgMember.role === "admin") return true;
+
+    const projectMember = project.members.find((m) => m.userId.toString() === uId);
+    if (!projectMember) return false;
+
+    return projectMember.role === "manager";
+  }
+
+  /**
    * Computes the list of source IDs a given user is authorized to access within a project.
    * Effective access = Org member AND Project member AND (visibility === 'project' OR user is in allowedUserIds).
    * Exception: Org admins have visibility over all sources in their organization.
    */
-  async getAllowedSourceIds(userId: string, projectId: string): Promise<string[]> {
-    const project = await Project.findById(projectId);
+  async getAllowedSourceIds(userId: string | any, projectId: string | any): Promise<string[]> {
+    const uId = typeof userId === "object" && userId ? ((userId as any).userId || (userId as any)._id || userId).toString() : String(userId);
+    const pId = typeof projectId === "object" && projectId ? ((projectId as any)._id || projectId).toString() : String(projectId);
+
+    const project = await Project.findById(pId);
     if (!project) return [];
 
     const org = await Organization.findById(project.orgId);
     if (!org) return [];
 
     // 1. Must be an active organization member
-    const orgMember = org.members.find((m) => m.userId.toString() === userId);
+    const orgMember = org.members.find((m) => m.userId.toString() === uId);
     if (!orgMember) return [];
 
     // 2. Org admin can see all sources in this project
@@ -30,11 +102,11 @@ export class AccessService {
     }
 
     // 3. Otherwise, user must be a member of the project
-    const isProjectMember = project.members.some((m) => m.userId.toString() === userId);
+    const isProjectMember = project.members.some((m) => m.userId.toString() === uId);
     if (!isProjectMember) return [];
 
     // 4. Return project-visible sources + restricted sources where user is explicitly whitelisted
-    const userObjectId = new Types.ObjectId(userId);
+    const userObjectId = new Types.ObjectId(uId);
     const permittedSources = await Source.find(
       {
         projectId: project._id,

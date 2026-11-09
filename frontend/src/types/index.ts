@@ -80,3 +80,44 @@ export interface SystemStatus {
   };
 }
 
+export interface IReportItem {
+  id: string;
+  text: string;
+  factRefs?: Array<{ kind: "task" | "decision" | "risk" | "dependency"; id: string }>;
+  citations: string[];
+  flag?: "no_evidence" | "uncertain" | "conflict";
+  reviewStatus: "pending" | "approved" | "edited" | "rejected";
+}
+
+export interface IReportSection {
+  key: string;
+  title: string;
+  items: IReportItem[];
+  approvedBy?: string;
+  approvedAt?: string;
+}
+
+export interface IReportApproval {
+  by: {
+    _id?: string;
+    id?: string;
+    name?: string;
+    email?: string;
+    avatarUrl?: string;
+  } | string;
+  at: string;
+  note?: string;
+}
+
+export interface IHandoverReport {
+  _id: string;
+  projectId: string;
+  version: number;
+  status: "draft" | "in_review" | "approved" | "shared";
+  generatedFromJobId?: string;
+  sections: IReportSection[];
+  approvals: IReportApproval[];
+  createdAt: string;
+  updatedAt: string;
+}
+

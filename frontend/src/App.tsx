@@ -16,6 +16,7 @@ import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SourcesPage } from "./pages/SourcesPage";
 import { ProcessingPage } from "./pages/ProcessingPage";
+import { HandoverDashboardPage } from "./pages/HandoverDashboardPage";
 import { StagePlaceholderPage } from "./pages/StagePlaceholderPage";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -163,11 +164,7 @@ export function App() {
             element={
               <ProtectedRoute>
                 <AppLayout>
-                  <StagePlaceholderPage
-                    stageNumber={6}
-                    title="Handover Dashboard"
-                    description="Explore completed work, pending tasks, component ownership, first-week onboarding plan, and the interactive dependency graph."
-                  />
+                  <HandoverDashboardPage />
                 </AppLayout>
               </ProtectedRoute>
             }

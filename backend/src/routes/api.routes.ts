@@ -6,6 +6,7 @@ import { orgRouter } from "./org.routes.js";
 import { projectRouter } from "./project.routes.js";
 import { sourceRouter, projectSourceRouter } from "./source.routes.js";
 import { processingRouter, projectProcessingRouter } from "./processing.routes.js";
+import { handoverRouter, projectHandoverRouter } from "./handover.routes.js";
 
 const router = Router();
 
@@ -18,8 +19,10 @@ router.use("/users", userRouter);
 router.use("/orgs", orgRouter);
 router.use("/projects", projectRouter);
 router.use("/projects/:id/sources", projectSourceRouter);
+router.use("/projects/:id/handover", projectHandoverRouter);
 router.use("/projects/:id", projectProcessingRouter);
 router.use("/sources", sourceRouter);
+router.use("/handover", handoverRouter);
 router.use("/", processingRouter);
 
 export { router as apiRouter };
