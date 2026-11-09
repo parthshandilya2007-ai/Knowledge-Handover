@@ -1,0 +1,14 @@
+{
+  "name": "knowledge-handover-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Knowledge Handover Platform: Replace the Person, Not the Knowledge",
+  "scripts": {
+    "start:backend": "npm --prefix backend run dev",
+    "start:ai": "cd ai-service && .venv\\Scripts\\python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload",
+    "start:frontend": "npm --prefix frontend run dev",
+    "test:backend": "npm --prefix backend test",
+    "test:ai": "cd ai-service && .venv\\Scripts\\pytest app/tests",
+    "verify:stage0": "npx --prefix backend tsx ../scripts/verify-stage0.ts"
+  }
+}
