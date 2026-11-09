@@ -247,6 +247,42 @@ interface INotification {
   readAt?: string;
   createdAt: string;
 }
+
+### 3.7 Contextual AI Assistant & RAG
+```typescript
+interface IChatRequest {
+  question: string;
+  conversationHistory?: Array<{
+    role: "user" | "assistant";
+    content: string;
+  }>;
+}
+
+interface IChatCitation {
+  chunkId: string;
+  sourceId: string;
+  quote: string;
+  locator?: {
+    page?: number;
+    lineStart?: number;
+    lineEnd?: number;
+    paragraph?: number;
+    itemType?: string;
+    itemId?: string;
+    url?: string;
+  };
+  sourceTitle?: string;
+  sourceType?: string;
+  url?: string;
+}
+
+interface IChatResponse {
+  answer: string;
+  citations: IChatCitation[];
+  suggestedActions: string[];
+  insufficientEvidence: boolean;
+}
+```
 ```
 
 ---

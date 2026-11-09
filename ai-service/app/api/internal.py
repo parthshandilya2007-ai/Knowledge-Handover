@@ -6,7 +6,9 @@ from app.pipeline.chunk_store import delete_chunks_by_source
 from app.pipeline.ingest import ingest_source_pipeline
 from app.pipeline.pipeline_runner import run_project_analysis_pipeline
 from app.pipeline.generator.report_generator import generate_handover_report
+from app.pipeline.rag.assistant import answer_project_question
 from app.schemas.generation import ReportGenerateRequest
+from app.schemas.chat import ChatRequest
 from app.pipeline.parsers.github_parser import GithubItemInput
 from app.security import generate_webhook_signature, verify_internal_key
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -140,6 +142,33 @@ async def generate_report_endpoint(payload: ReportGenerateRequest):
                 "error": {
                     "code": "GENERATION_FAILED",
                     "message": f"Report generation failed: {str(e)}",
+                },
+            },
+        )
+
+
+@router.post("/chat", dependencies=[Depends(verify_internal_key)])
+async def internal_chat_endpoint(payload: ChatRequest):
+    """Executes permission-aware RAG answering strictly using authorized project sources."""
+    try:
+        response_data = await answer_project_question(
+            project_id=payload.projectId,
+            question=payload.question,
+            allowed_source_ids=payload.allowedSourceIds,
+            conversation_history=payload.conversationHistory,
+        )
+        return {
+            "ok": True,
+            "data": response_data.model_dump(),
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "ok": False,
+                "error": {
+                    "code": "CHAT_RAG_FAILED",
+                    "message": f"AI Assistant RAG query failed: {str(e)}",
                 },
             },
         )

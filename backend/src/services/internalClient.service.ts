@@ -165,6 +165,58 @@ export class InternalClientService {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   }
+
+  async chat(payload: {
+    projectId: string;
+    question: string;
+    allowedSourceIds: string[];
+    conversationHistory?: Array<{ role: string; content: string }>;
+  }): Promise<{
+    success: boolean;
+    data?: {
+      answer: string;
+      citations: Array<{
+        chunkId: string;
+        sourceId: string;
+        quote: string;
+        locator?: any;
+        sourceTitle?: string;
+        url?: string;
+      }>;
+      suggestedActions: string[];
+      insufficientEvidence: boolean;
+    };
+    error?: string;
+  }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/internal/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Internal-Key": this.internalKey,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        return { success: false, error: `AI Service HTTP ${response.status}: ${text}` };
+      }
+
+      const json = (await response.json()) as {
+        ok: boolean;
+        data: {
+          answer: string;
+          citations: any[];
+          suggestedActions: string[];
+          insufficientEvidence: boolean;
+        };
+      };
+      return { success: true, data: json.data };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  }
 }
 
 export const internalClient = new InternalClientService();

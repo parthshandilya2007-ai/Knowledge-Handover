@@ -18,6 +18,7 @@ import {
   resolveConflict,
   listProjectAuditLogs,
 } from "../controllers/fact.controller.js";
+import { askAssistant } from "../controllers/assistant.controller.js";
 
 // Project-nested router: /api/v1/projects/:id/...
 export const projectProcessingRouter = Router({ mergeParams: true });
@@ -30,6 +31,7 @@ projectProcessingRouter.get("/decisions", requireProjectAccess("viewer"), listPr
 projectProcessingRouter.get("/risks", requireProjectAccess("viewer"), listProjectRisks);
 projectProcessingRouter.get("/dependencies", requireProjectAccess("viewer"), listProjectDependencies);
 projectProcessingRouter.get("/audit-logs", requireProjectAccess("viewer"), listProjectAuditLogs);
+projectProcessingRouter.post("/chat", requireProjectAccess("viewer"), askAssistant);
 
 // Direct top-level router for jobs, facts, and evidence
 const router = Router();

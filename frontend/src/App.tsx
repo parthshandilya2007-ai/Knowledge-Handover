@@ -18,7 +18,7 @@ import { SourcesPage } from "./pages/SourcesPage";
 import { ProcessingPage } from "./pages/ProcessingPage";
 import { HandoverDashboardPage } from "./pages/HandoverDashboardPage";
 import { ReviewPage } from "./pages/ReviewPage";
-import { StagePlaceholderPage } from "./pages/StagePlaceholderPage";
+import { AssistantPage } from "./pages/AssistantPage";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -187,11 +187,7 @@ export function App() {
             element={
               <ProtectedRoute>
                 <AppLayout>
-                  <StagePlaceholderPage
-                    stageNumber={8}
-                    title="Contextual AI Assistant"
-                    description="Ask project questions answered strictly from authorized sources with clickable citations and grounded next action suggestions."
-                  />
+                  <AssistantPage />
                 </AppLayout>
               </ProtectedRoute>
             }
