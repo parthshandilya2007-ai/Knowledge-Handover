@@ -12,3 +12,4 @@ function createStorageAdapter(): IStorageAdapter {
 
 export const storageAdapter = createStorageAdapter();
 export * from "./storageAdapter.interface.js";
+

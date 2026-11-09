@@ -10,3 +10,4 @@ This repository manages application microservices.
 
 ## Getting Started
 Run `npm run start:backend` and `npm run start:ai` to launch local services.
+

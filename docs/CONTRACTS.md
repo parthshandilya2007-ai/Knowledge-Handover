@@ -279,12 +279,12 @@ interface INotification {
 - `DELETE /api/v1/projects/:id/members/:userId` $\rightarrow$ `{ project }`
 
 ### 4.4 Sources
-- `POST /api/v1/projects/:id/sources/upload` (Multer multipart) $\rightarrow$ `{ source }`
-- `POST /api/v1/projects/:id/sources/github` $\rightarrow$ `{ source }`
-- `POST /api/v1/projects/:id/sources/notes` $\rightarrow$ `{ source }`
-- `GET /api/v1/projects/:id/sources` $\rightarrow$ `{ sources: [] }` (viewer-filtered)
-- `PATCH /api/v1/sources/:id/visibility` $\rightarrow$ `{ source }`
-- `POST /api/v1/sources/:id/reprocess` $\rightarrow$ `{ job }`
+- `POST /api/v1/projects/:id/sources/upload` (Multer multipart: `file`, `title?`, `visibility`, `allowedUserIds?`) $\rightarrow$ `{ source }`
+- `POST /api/v1/projects/:id/sources/github` (`{ repoUrl?, token?, useFixture?: boolean, visibility?: "project" | "restricted", allowedUserIds?: string[] }`) $\rightarrow$ `{ source, itemCount }`
+- `POST /api/v1/projects/:id/sources/notes` (`{ title, content, type: "meeting_note" | "text", visibility, allowedUserIds? }`) $\rightarrow$ `{ source }`
+- `GET /api/v1/projects/:id/sources` $\rightarrow$ `{ sources: [] }` (viewer-filtered via `accessService.getAllowedSourceIds`)
+- `PATCH /api/v1/sources/:id/visibility` (`{ visibility, allowedUserIds? }`) $\rightarrow$ `{ source }`
+- `POST /api/v1/sources/:id/reprocess` $\rightarrow$ `{ source }`
 - `DELETE /api/v1/sources/:id` $\rightarrow$ `{ success: true }`
 
 ### 4.5 Processing & Jobs

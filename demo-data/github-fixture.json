@@ -1,0 +1,123 @@
+{
+  "repository": {
+    "name": "relay-core",
+    "fullName": "codesync-team/relay-core",
+    "owner": "codesync-team",
+    "description": "Core backend services and real-time synchronization engine for student hackathon collaboration.",
+    "defaultBranch": "main",
+    "htmlUrl": "https://github.com/codesync-team/relay-core"
+  },
+  "readme": {
+    "filename": "README.md",
+    "htmlUrl": "https://github.com/codesync-team/relay-core/blob/main/README.md",
+    "content": "# CodeSync Relay Core\n\nCore backend platform for real-time collaboration and project management.\n\n## Architecture\n- Runtime: Node.js with TypeScript and Express\n- Real-time: Socket.IO authenticated rooms\n- Primary Database: MongoDB is our chosen primary database for all collections, user records, and metadata.\n- AI Services: Python FastAPI microservice with vector search\n\n## Running the Project\nRun `npm install` and `npm run dev` to start the local development server."
+  },
+  "commits": [
+    {
+      "sha": "a1b2c3d4e5f67890123456789abcdef012345678",
+      "shortSha": "a1b2c3d",
+      "message": "feat: initial commit with Node.js Express server and MongoDB models",
+      "author": "Sarah Chen <sarah@example.com>",
+      "date": "2026-10-01T09:30:00Z",
+      "htmlUrl": "https://github.com/codesync-team/relay-core/commit/a1b2c3d4e5f67890123456789abcdef012345678"
+    },
+    {
+      "sha": "e4f5a6b7c8d90123456789abcdef0123456789ab",
+      "shortSha": "e4f5a6b",
+      "message": "feat(auth): add JWT authentication and user registration flow",
+      "author": "Alex Rivera <alex@example.com>",
+      "date": "2026-10-08T14:15:00Z",
+      "htmlUrl": "https://github.com/codesync-team/relay-core/commit/e4f5a6b7c8d90123456789abcdef0123456789ab"
+    },
+    {
+      "sha": "7c8d9e0f1a2b34567890abcdef0123456789abcd",
+      "shortSha": "7c8d9e0",
+      "message": "docs: update API documentation and local setup instructions",
+      "author": "Marcus Brody <marcus@example.com>",
+      "date": "2026-10-12T16:45:00Z",
+      "htmlUrl": "https://github.com/codesync-team/relay-core/commit/7c8d9e0f1a2b34567890abcdef0123456789abcd"
+    },
+    {
+      "sha": "1f2e3d4c5b6a7890123456789abcdef012345678",
+      "shortSha": "1f2e3d4",
+      "message": "fix(users): resolve issue #5 user profile update validation error",
+      "author": "Alex Rivera <alex@example.com>",
+      "date": "2026-10-18T10:50:00Z",
+      "htmlUrl": "https://github.com/codesync-team/relay-core/commit/1f2e3d4c5b6a7890123456789abcdef012345678"
+    }
+  ],
+  "pullRequests": [
+    {
+      "number": 12,
+      "title": "feat: migrate database to PostgreSQL",
+      "author": "marcus-brody",
+      "state": "open",
+      "createdAt": "2026-10-16T11:20:00Z",
+      "htmlUrl": "https://github.com/codesync-team/relay-core/pull/12",
+      "body": "Migrating from MongoDB to PostgreSQL as agreed in the team architecture sync on October 15. Replaces MongoDB Mongoose schemas with relational models for strict consistency."
+    },
+    {
+      "number": 14,
+      "title": "feat: add WebSocket live sync for real-time notifications",
+      "author": "alex-rivera",
+      "state": "open",
+      "createdAt": "2026-10-19T08:40:00Z",
+      "htmlUrl": "https://github.com/codesync-team/relay-core/pull/14",
+      "body": "Implements Socket.IO rooms for project handover updates and live progress streaming across connected clients."
+    }
+  ],
+  "issues": [
+    {
+      "number": 5,
+      "title": "Fix user profile update validation bug",
+      "author": "sarah-chen",
+      "state": "closed",
+      "createdAt": "2026-10-14T09:10:00Z",
+      "closedAt": "2026-10-18T11:00:00Z",
+      "htmlUrl": "https://github.com/codesync-team/relay-core/issues/5",
+      "body": "User profile updates fail silently when updating avatar URL without supplying current password. Resolved in commit 1f2e3d4."
+    },
+    {
+      "number": 8,
+      "title": "Database engine decision: MongoDB vs PostgreSQL",
+      "author": "marcus-brody",
+      "state": "open",
+      "createdAt": "2026-10-17T15:00:00Z",
+      "closedAt": null,
+      "htmlUrl": "https://github.com/codesync-team/relay-core/issues/8",
+      "body": "Contradiction in repository: README states MongoDB is the primary database, while PR #12 implements PostgreSQL migration. Need formal sign-off before merging."
+    },
+    {
+      "number": 9,
+      "title": "Security audit: Add rate limiting to authentication endpoints",
+      "author": "security-bot",
+      "state": "open",
+      "createdAt": "2026-10-18T12:00:00Z",
+      "closedAt": null,
+      "htmlUrl": "https://github.com/codesync-team/relay-core/issues/9",
+      "body": "Security risk: /api/v1/auth/login currently has no strict rate limit. We must enforce express-rate-limit to protect against brute force attacks."
+    }
+  ],
+  "branches": [
+    {
+      "name": "main",
+      "stale": false,
+      "lastCommitDate": "2026-10-18T10:50:00Z",
+      "htmlUrl": "https://github.com/codesync-team/relay-core/tree/main"
+    },
+    {
+      "name": "feat/postgres-migration",
+      "stale": false,
+      "lastCommitDate": "2026-10-16T11:20:00Z",
+      "htmlUrl": "https://github.com/codesync-team/relay-core/tree/feat/postgres-migration"
+    },
+    {
+      "name": "feat/legacy-redis-cache",
+      "stale": true,
+      "lastCommitDate": "2026-07-10T14:20:00Z",
+      "htmlUrl": "https://github.com/codesync-team/relay-core/tree/feat/legacy-redis-cache",
+      "description": "Unmerged experiment adding Redis caching to session store. Stale and dormant for over 90 days."
+    }
+  ]
+}
+

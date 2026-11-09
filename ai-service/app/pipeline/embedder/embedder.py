@@ -75,3 +75,4 @@ def get_embedder() -> BaseEmbedder:
         api_key=settings.OPENAI_API_KEY,
         model=settings.OPENAI_EMBEDDING_MODEL
     )
+

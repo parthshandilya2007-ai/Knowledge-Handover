@@ -8,6 +8,8 @@ import { storageAdapter } from "../storage/index.js";
 import { internalClient } from "../services/internalClient.service.js";
 import { accessService } from "../services/access.service.js";
 import { auditLogService } from "../services/auditLog.service.js";
+import { GithubService, GithubRepoData } from "../services/github.service.js";
+import { env } from "../config/env.js";
 import { sendSuccess, sendError } from "../utils/response.js";
 import { getIO } from "../sockets/socketServer.js";
 
@@ -150,6 +152,100 @@ export async function createNotesSource(req: AuthenticatedRequest, res: Response
   }
 }
 
+export async function connectGithubSource(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const projectId = req.params.id || req.body.projectId;
+    const project = await Project.findById(projectId);
+    if (!project) {
+      sendError(res, "NOT_FOUND", "Project not found", 404);
+      return;
+    }
+
+    const { repoUrl, token, useFixture = false, visibility = "project", allowedUserIds = [] } = req.body;
+
+    let repoData: GithubRepoData;
+    if (useFixture || (!repoUrl && !token && !env.GITHUB_TOKEN)) {
+      repoData = await GithubService.loadDemoFixture();
+    } else {
+      if (!repoUrl) {
+        sendError(res, "VALIDATION_ERROR", "Repository URL or identifier (e.g. 'owner/repo') is required", 400);
+        return;
+      }
+      repoData = await GithubService.fetchRepoData(repoUrl, token);
+    }
+
+    let parsedAllowedUsers: Types.ObjectId[] = [];
+    if (visibility === "restricted" && allowedUserIds) {
+      const rawIds = Array.isArray(allowedUserIds) ? allowedUserIds : [allowedUserIds];
+      parsedAllowedUsers = rawIds.map((id: string) => new Types.ObjectId(id));
+    }
+
+    const encryptedToken = token ? GithubService.encryptToken(token) : undefined;
+
+    const source = await Source.create({
+      projectId: project._id,
+      orgId: project.orgId,
+      type: "github",
+      title: repoData.fullName,
+      url: repoData.htmlUrl,
+      status: "uploaded",
+      visibility: visibility === "restricted" ? "restricted" : "project",
+      allowedUserIds: parsedAllowedUsers,
+      metadata: {
+        owner: repoData.owner,
+        repo: repoData.repo,
+        fullName: repoData.fullName,
+        description: repoData.description,
+        defaultBranch: repoData.defaultBranch,
+        isFixture: repoData.isFixture === true,
+        totalItems: repoData.items.length,
+        hasEncryptedToken: !!encryptedToken,
+        encryptedToken
+      },
+      createdBy: req.user!._id
+    });
+
+    await auditLogService.recordAction(req.user!._id, "source.github_connected", "source", source._id.toString(), undefined, {
+      fullName: repoData.fullName,
+      itemCount: repoData.items.length,
+      isFixture: repoData.isFixture
+    });
+
+    getIO()?.to(`project:${projectId}`).emit("source:updated", {
+      sourceId: source._id.toString(),
+      status: "uploaded"
+    });
+
+    // Trigger AI service ingestion with normalized items
+    internalClient
+      .ingestSource({
+        sourceId: source._id.toString(),
+        projectId: project._id.toString(),
+        type: "github",
+        title: source.title,
+        items: repoData.items
+      })
+      .catch((err) => {
+        console.error(`[IngestTrigger] Error dispatching GitHub source to AI service:`, err);
+      });
+
+    sendSuccess(res, { source, itemCount: repoData.items.length }, 201);
+  } catch (err: any) {
+    if (
+      err.message &&
+      (err.message.includes("Invalid GitHub repository") ||
+        err.message.includes("rate limit") ||
+        err.message.includes("not found") ||
+        err.message.includes("authentication failed") ||
+        err.message.includes("forbidden"))
+    ) {
+      sendError(res, "GITHUB_ERROR", err.message, 400);
+      return;
+    }
+    next(err);
+  }
+}
+
 export async function listProjectSources(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const projectId = req.params.id;
@@ -228,15 +324,35 @@ export async function reprocessSource(req: AuthenticatedRequest, res: Response, 
     await internalClient.deleteSource(sourceId);
 
     // Re-trigger ingest
-    const textContent = (source.metadata as any)?.text;
-    await internalClient.ingestSource({
-      sourceId: source._id.toString(),
-      projectId: source.projectId.toString(),
-      type: source.type,
-      title: source.title,
-      fileRef: source.fileRef,
-      text: textContent
-    });
+    if (source.type === "github") {
+      let repoData: GithubRepoData;
+      if (source.metadata?.isFixture) {
+        repoData = await GithubService.loadDemoFixture();
+      } else {
+        const decryptedToken = source.metadata?.encryptedToken
+          ? GithubService.decryptToken(source.metadata.encryptedToken as string)
+          : undefined;
+        repoData = await GithubService.fetchRepoData((source.metadata?.fullName as string) || source.title, decryptedToken);
+      }
+
+      await internalClient.ingestSource({
+        sourceId: source._id.toString(),
+        projectId: source.projectId.toString(),
+        type: "github",
+        title: source.title,
+        items: repoData.items
+      });
+    } else {
+      const textContent = (source.metadata as any)?.text;
+      await internalClient.ingestSource({
+        sourceId: source._id.toString(),
+        projectId: source.projectId.toString(),
+        type: source.type,
+        title: source.title,
+        fileRef: source.fileRef,
+        text: textContent
+      });
+    }
 
     sendSuccess(res, { source });
   } catch (err) {

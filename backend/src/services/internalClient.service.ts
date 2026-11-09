@@ -57,6 +57,14 @@ export class InternalClientService {
     title: string;
     fileRef?: string;
     text?: string;
+    items?: Array<{
+      itemType: string;
+      itemId: string;
+      title: string;
+      url?: string;
+      text: string;
+      metadata?: Record<string, unknown>;
+    }>;
   }): Promise<{ success: boolean; error?: string }> {
     try {
       const response = await fetch(`${this.baseUrl}/internal/sources/ingest`, {

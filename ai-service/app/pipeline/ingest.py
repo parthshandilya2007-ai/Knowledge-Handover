@@ -1,12 +1,13 @@
 import json
 import logging
-from typing import Optional
+from typing import Optional, List, Any
 import httpx
 from app.config import settings
 from app.security import generate_webhook_signature
 from app.pipeline.parsers.pdf_parser import parse_pdf_bytes
 from app.pipeline.parsers.docx_parser import parse_docx_bytes
 from app.pipeline.parsers.txt_parser import parse_txt_bytes
+from app.pipeline.parsers.github_parser import parse_github_items
 from app.pipeline.chunker.text_chunker import chunk_document
 from app.pipeline.embedder.embedder import get_embedder
 from app.pipeline.chunk_store import save_chunks, delete_chunks_by_source
@@ -58,7 +59,8 @@ async def ingest_source_pipeline(
     source_type: str,
     title: str,
     file_ref: Optional[str] = None,
-    text_content: Optional[str] = None
+    text_content: Optional[str] = None,
+    items: Optional[List[Any]] = None
 ) -> None:
     """
     Executes stages 2-4 of the pipeline for a single source:
@@ -76,29 +78,33 @@ async def ingest_source_pipeline(
         # Stage 2: PARSE
         await send_pipeline_webhook(job_id, project_id, "parsing", 25, source_id)
 
-        file_bytes = b""
-        if file_ref:
-            # Fetch file bytes from Express internal endpoint
-            file_url = f"{settings.BACKEND_INTERNAL_URL}/internal/files/{source_id}"
-            headers = {"X-Internal-Key": settings.INTERNAL_SERVICE_KEY}
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                res = await client.get(file_url, headers=headers)
-                if res.status_code != 200:
-                    raise ValueError(f"Failed to fetch file from Express: HTTP {res.status_code}")
-                file_bytes = res.content
-
-        # Parse according to format
         parsed_doc = None
-        lower_ref = (file_ref or "").lower()
-        lower_title = title.lower()
 
-        if lower_ref.endswith(".pdf") or lower_title.endswith(".pdf") or file_bytes[:4] == b"%PDF":
-            parsed_doc = parse_pdf_bytes(file_bytes, original_name=title)
-        elif lower_ref.endswith(".docx") or lower_title.endswith(".docx") or file_bytes[:4] == b"PK\x03\x04":
-            parsed_doc = parse_docx_bytes(file_bytes, original_name=title)
+        if source_type == "github":
+            parsed_doc = parse_github_items(items or [], repo_name=title)
         else:
-            # TXT or meeting notes
-            parsed_doc = parse_txt_bytes(file_bytes, original_name=title, text_content=text_content or "")
+            file_bytes = b""
+            if file_ref:
+                # Fetch file bytes from Express internal endpoint
+                file_url = f"{settings.BACKEND_INTERNAL_URL}/internal/files/{source_id}"
+                headers = {"X-Internal-Key": settings.INTERNAL_SERVICE_KEY}
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    res = await client.get(file_url, headers=headers)
+                    if res.status_code != 200:
+                        raise ValueError(f"Failed to fetch file from Express: HTTP {res.status_code}")
+                    file_bytes = res.content
+
+            # Parse according to format
+            lower_ref = (file_ref or "").lower()
+            lower_title = title.lower()
+
+            if lower_ref.endswith(".pdf") or lower_title.endswith(".pdf") or file_bytes[:4] == b"%PDF":
+                parsed_doc = parse_pdf_bytes(file_bytes, original_name=title)
+            elif lower_ref.endswith(".docx") or lower_title.endswith(".docx") or file_bytes[:4] == b"PK\x03\x04":
+                parsed_doc = parse_docx_bytes(file_bytes, original_name=title)
+            else:
+                # TXT or meeting notes
+                parsed_doc = parse_txt_bytes(file_bytes, original_name=title, text_content=text_content or "")
 
         if not parsed_doc.raw_text.strip():
             raise ValueError("Document parsed but produced empty text content")

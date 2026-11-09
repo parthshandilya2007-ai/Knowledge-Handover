@@ -49,3 +49,4 @@ def parse_docx_bytes(data: bytes, original_name: str = "") -> ParsedDocument:
           "originalName": original_name,
       },
   )
+

@@ -31,3 +31,4 @@ def parse_pdf_bytes(data: bytes, original_name: str = "") -> ParsedDocument:
           "originalName": original_name,
       },
   )
+

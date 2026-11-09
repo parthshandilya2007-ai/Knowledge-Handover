@@ -7,3 +7,4 @@ Subject: Q4 Headcount Budget and Executive Compensation
 - Private severance agreements signed for departing engineering director.
 
 Note: This document contains restricted financial records and MUST NOT be shared with incoming junior developers or contractors.
+

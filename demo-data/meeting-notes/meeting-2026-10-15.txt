@@ -12,3 +12,4 @@ Discussion Points:
 
 3. Open / Unanswered Questions:
    Unanswered question: Who will be responsible for managing AWS backup snapshots and disaster recovery failover?
+

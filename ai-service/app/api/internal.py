@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 import json
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from app.config import settings
 from app.pipeline.chunk_store import delete_chunks_by_source
 from app.pipeline.ingest import ingest_source_pipeline
+from app.pipeline.parsers.github_parser import GithubItemInput
 from app.security import generate_webhook_signature, verify_internal_key
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 import httpx
@@ -20,12 +21,13 @@ class WebhookTestPayload(BaseModel):
 
 
 class SourceIngestRequest(BaseModel):
-  sourceId: str
-  projectId: str
-  type: str
-  title: str
-  fileRef: Optional[str] = None
-  text: Optional[str] = None
+    sourceId: str
+    projectId: str
+    type: str
+    title: str
+    fileRef: Optional[str] = None
+    text: Optional[str] = None
+    items: Optional[List[GithubItemInput]] = None
 
 
 @router.get("/health", dependencies=[Depends(verify_internal_key)])
@@ -50,25 +52,26 @@ async def internal_health():
 async def ingest_source(
     payload: SourceIngestRequest, background_tasks: BackgroundTasks
 ):
-  """Trigger parsing, chunking, and embedding in the background for an uploaded source."""
-  background_tasks.add_task(
-      ingest_source_pipeline,
-      source_id=payload.sourceId,
-      project_id=payload.projectId,
-      source_type=payload.type,
-      title=payload.title,
-      file_ref=payload.fileRef,
-      text_content=payload.text,
-  )
+    """Trigger parsing, chunking, and embedding in the background for an uploaded source."""
+    background_tasks.add_task(
+        ingest_source_pipeline,
+        source_id=payload.sourceId,
+        project_id=payload.projectId,
+        source_type=payload.type,
+        title=payload.title,
+        file_ref=payload.fileRef,
+        text_content=payload.text,
+        items=payload.items,
+    )
 
-  return {
-      "ok": True,
-      "data": {
-          "accepted": True,
-          "sourceId": payload.sourceId,
-          "message": "Ingestion job queued",
-      },
-  }
+    return {
+        "ok": True,
+        "data": {
+            "accepted": True,
+            "sourceId": payload.sourceId,
+            "message": "Ingestion job queued",
+        },
+    }
 
 
 @router.delete(

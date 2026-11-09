@@ -17,3 +17,4 @@ class ParsedDocument(BaseModel):
   raw_text: str
   locators: List[DocumentLocator]
   metadata: Dict[str, Any] = {}
+

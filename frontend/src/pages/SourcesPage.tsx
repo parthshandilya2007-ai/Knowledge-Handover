@@ -12,7 +12,10 @@ import {
   AlertCircle,
   Loader2,
   ArrowRight,
-  Shield
+  Shield,
+  Github,
+  ExternalLink,
+  Sparkles
 } from "lucide-react";
 import { api } from "../lib/api/client";
 import { getSocket, joinProjectRoom } from "../lib/socket/socketClient";
@@ -43,8 +46,8 @@ export function SourcesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Active Tab: "upload" | "notes"
-  const [activeTab, setActiveTab] = useState<"upload" | "notes">("upload");
+  // Active Tab: "upload" | "notes" | "github"
+  const [activeTab, setActiveTab] = useState<"upload" | "notes" | "github">("upload");
 
   // Upload Form State
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
@@ -64,6 +67,15 @@ export function SourcesPage() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
 
+  // GitHub Form State
+  const [githubRepoUrl, setGithubRepoUrl] = useState("");
+  const [githubToken, setGithubToken] = useState("");
+  const [githubVisibility, setGithubVisibility] = useState<"project" | "restricted">("project");
+  const [githubAllowedUsers, setGithubAllowedUsers] = useState("");
+  const [connectingGithub, setConnectingGithub] = useState(false);
+  const [githubError, setGithubError] = useState<string | null>(null);
+  const [githubConfigured, setGithubConfigured] = useState<boolean>(true);
+
   // Load Projects on mount
   useEffect(() => {
     api
@@ -76,6 +88,15 @@ export function SourcesPage() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+
+    api
+      .get<{ integrations?: { github?: { configured?: boolean } } }>("/system/status")
+      .then((statusData) => {
+        if (statusData.integrations?.github) {
+          setGithubConfigured(statusData.integrations.github.configured === true);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Fetch sources when selectedProjectId changes
@@ -192,6 +213,54 @@ export function SourcesPage() {
       setNotesError(err instanceof Error ? err.message : "Failed to save meeting notes");
     } finally {
       setSavingNotes(false);
+    }
+  };
+
+  const handleConnectGithub = async (useFixture: boolean = false) => {
+    if (!selectedProjectId) return;
+    setGithubError(null);
+    setConnectingGithub(true);
+
+    try {
+      const allowedIds =
+        githubVisibility === "restricted" && githubAllowedUsers.trim()
+          ? githubAllowedUsers
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [];
+
+      const payload: Record<string, any> = {
+        useFixture,
+        visibility: githubVisibility,
+        allowedUserIds: allowedIds
+      };
+
+      if (!useFixture) {
+        if (!githubRepoUrl.trim()) {
+          setGithubError("Please enter a GitHub repository URL or 'owner/repo'");
+          setConnectingGithub(false);
+          return;
+        }
+        payload.repoUrl = githubRepoUrl.trim();
+        if (githubToken.trim()) {
+          payload.token = githubToken.trim();
+        }
+      }
+
+      const res = await api.post<{ source: SourceItem; itemCount: number }>(
+        `/projects/${selectedProjectId}/sources/github`,
+        payload
+      );
+
+      setSources((prev) => [res.source, ...prev]);
+      setGithubRepoUrl("");
+      setGithubToken("");
+      setGithubAllowedUsers("");
+    } catch (err: unknown) {
+      setGithubError(err instanceof Error ? err.message : "Failed to connect GitHub repository");
+    } finally {
+      setConnectingGithub(false);
     }
   };
 
@@ -326,7 +395,17 @@ export function SourcesPage() {
                       : "text-text-secondary hover:text-white"
                   }`}
                 >
-                  <FilePlus className="w-3.5 h-3.5" /> Add Notes
+                  <FilePlus className="w-3.5 h-3.5" /> Notes
+                </button>
+                <button
+                  onClick={() => setActiveTab("github")}
+                  className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${
+                    activeTab === "github"
+                      ? "bg-accent/20 text-accent font-semibold border border-accent/30"
+                      : "text-text-secondary hover:text-white"
+                  }`}
+                >
+                  <Github className="w-3.5 h-3.5" /> GitHub
                 </button>
               </div>
 
@@ -520,6 +599,151 @@ export function SourcesPage() {
                   </button>
                 </form>
               )}
+
+              {/* TAB 3: GitHub Integration */}
+              {activeTab === "github" && (
+                <div className="space-y-4">
+                  {!githubConfigured && (
+                    <div className="p-3 rounded-lg bg-blue-950/40 border border-blue-500/40 text-blue-200 text-xs flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-semibold text-white">Public repos & demo fixture ready.</span>
+                        <p className="mt-0.5 text-blue-300/80">
+                          For private repos, supply a Personal Access Token below (encrypted with AES-256). You can also use the Hackathon Demo Fixture with zero setup.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {githubError && (
+                    <div className="p-3 rounded-lg bg-red-950/40 border border-red-500/50 text-red-200 text-xs">
+                      {githubError}
+                    </div>
+                  )}
+
+                  {/* 1-Click Demo Hackathon Button */}
+                  <div className="p-3.5 rounded-xl bg-surface border border-accent/30 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-accent uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-accent" /> Recommended Demo
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-accent/10 text-accent font-mono">
+                        codesync-team/relay-core
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-text-muted leading-relaxed">
+                      Instant ingestion of demo repository: README (MongoDB claim), PR #12 (PostgreSQL migration conflict), PR #14 (WebSockets), commits, and issues.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handleConnectGithub(true)}
+                      disabled={connectingGithub}
+                      className="w-full py-2 px-3 rounded-lg bg-accent/20 border border-accent/40 text-accent font-semibold text-xs hover:bg-accent/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {connectingGithub ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Ingesting Demo Fixture...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5" /> Ingest Hackathon Demo Fixture
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="relative flex items-center justify-center my-3">
+                    <div className="border-t border-surface-border w-full"></div>
+                    <span className="bg-panel px-2 text-[10px] text-text-muted uppercase tracking-wider absolute">
+                      or connect live repo
+                    </span>
+                  </div>
+
+                  {/* Live GitHub Connect Form */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleConnectGithub(false);
+                    }}
+                    className="space-y-3"
+                  >
+                    <div>
+                      <label className="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-1.5">
+                        Repository Identifier or URL
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={githubRepoUrl}
+                        onChange={(e) => setGithubRepoUrl(e.target.value)}
+                        placeholder="owner/repo or https://github.com/owner/repo"
+                        className="w-full px-3 py-2 rounded-lg bg-surface border border-surface-border text-xs text-white placeholder-text-muted focus:outline-none focus:border-accent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                        <span>Personal Access Token</span>
+                        <span className="text-[10px] text-text-muted font-normal lowercase flex items-center gap-1">
+                          <Lock className="w-2.5 h-2.5" /> AES-256 encrypted
+                        </span>
+                      </label>
+                      <input
+                        type="password"
+                        value={githubToken}
+                        onChange={(e) => setGithubToken(e.target.value)}
+                        placeholder="ghp_... (optional for public repositories)"
+                        className="w-full px-3 py-2 rounded-lg bg-surface border border-surface-border text-xs text-white placeholder-text-muted font-mono focus:outline-none focus:border-accent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-1.5">
+                        Visibility Permission
+                      </label>
+                      <select
+                        value={githubVisibility}
+                        onChange={(e) => setGithubVisibility(e.target.value as any)}
+                        className="w-full px-3 py-2 rounded-lg bg-surface border border-surface-border text-xs text-white focus:outline-none focus:border-accent"
+                      >
+                        <option value="project">Project (All Project Members)</option>
+                        <option value="restricted">Restricted (Whitelisted Members Only)</option>
+                      </select>
+                    </div>
+
+                    {githubVisibility === "restricted" && (
+                      <div>
+                        <label className="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-1.5">
+                          Allowed User IDs (Comma-separated)
+                        </label>
+                        <input
+                          type="text"
+                          value={githubAllowedUsers}
+                          onChange={(e) => setGithubAllowedUsers(e.target.value)}
+                          placeholder="userId1, userId2"
+                          className="w-full px-3 py-2 rounded-lg bg-surface border border-surface-border text-xs text-white placeholder-text-muted font-mono focus:outline-none focus:border-accent"
+                        />
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={connectingGithub || !githubRepoUrl.trim()}
+                      className="w-full mt-2 py-2.5 px-4 rounded-lg bg-accent text-background font-semibold text-xs hover:bg-accent-hover transition-colors shadow-lg shadow-accent/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {connectingGithub ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Fetching & Indexing...
+                        </>
+                      ) : (
+                        <>
+                          <Github className="w-3.5 h-3.5" /> Connect & Index Repository
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
 
             {/* Quick Helper / Demo Data Tip */}
@@ -528,12 +752,13 @@ export function SourcesPage() {
                 <Shield className="w-4 h-4 text-accent" /> Demo Data Ingestion
               </div>
               <p>
-                Sample files are prepared in <code className="text-accent">demo-data/</code>:
+                Sample files & fixtures prepared in <code className="text-accent">demo-data/</code>:
               </p>
-              <ul className="list-disc list-inside space-y-0.5 text-text-muted">
+              <ul className="list-disc list-inside space-y-1 text-text-muted">
                 <li><code className="text-white">demo-data/documents/README.md</code> (MongoDB claim)</li>
                 <li><code className="text-white">demo-data/meeting-notes/meeting-2026-10-15.txt</code> (PostgreSQL conflict)</li>
                 <li><code className="text-white">demo-data/meeting-notes/finance-private-notes.txt</code> (Restricted source)</li>
+                <li><code className="text-accent">demo-data/github-fixture.json</code> (relay-core PRs, commits & issues)</li>
               </ul>
             </div>
           </div>
@@ -579,11 +804,37 @@ export function SourcesPage() {
                         <tr key={src._id} className="hover:bg-surface/50 transition-colors">
                           <td className="py-3 pr-4">
                             <div className="font-medium text-white flex items-center gap-2">
-                              {src.title}
+                              {src.type === "github" ? (
+                                <Github className="w-3.5 h-3.5 text-accent shrink-0" />
+                              ) : (
+                                <FileText className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                              )}
+                              <span className="truncate max-w-[200px]">{src.title}</span>
+                              {src.metadata?.url && (
+                                <a
+                                  href={src.metadata.url as string}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-text-muted hover:text-accent transition-colors"
+                                  title="Open in GitHub"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              )}
+                              {src.metadata?.isFixture && (
+                                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-purple-950/60 border border-purple-500/40 text-purple-300">
+                                  Fixture
+                                </span>
+                              )}
                             </div>
-                            <div className="text-[11px] text-text-muted mt-0.5">
-                              {new Date(src.createdAt).toLocaleDateString()}
-                              {src.metadata?.size && ` • ${(src.metadata.size / 1024).toFixed(1)} KB`}
+                            <div className="text-[11px] text-text-muted mt-0.5 flex items-center gap-1.5">
+                              <span>{new Date(src.createdAt).toLocaleDateString()}</span>
+                              {src.metadata?.totalItems && (
+                                <span>• {src.metadata.totalItems} items indexed</span>
+                              )}
+                              {src.metadata?.size && (
+                                <span>• {(src.metadata.size / 1024).toFixed(1)} KB</span>
+                              )}
                             </div>
                           </td>
 

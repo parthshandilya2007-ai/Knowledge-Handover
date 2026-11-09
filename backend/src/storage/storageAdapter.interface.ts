@@ -9,3 +9,4 @@ export interface IStorageAdapter {
   getFile(fileRef: string): Promise<Buffer>;
   deleteFile(fileRef: string): Promise<void>;
 }
+

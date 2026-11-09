@@ -81,3 +81,4 @@ export function validateMagicBytes(req: Request, res: Response, next: NextFuncti
 
   next();
 }
+

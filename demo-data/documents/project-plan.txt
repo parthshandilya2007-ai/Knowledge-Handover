@@ -12,3 +12,4 @@ This platform automates team handovers when developers transition off projects.
 Primary database: MongoDB Atlas Cluster.
 All collections and vector embeddings reside on MongoDB Atlas.
 The backend exposes REST APIs on port 5000 and the AI intelligence service runs on port 8000.
+

@@ -81,3 +81,4 @@ def test_deterministic_vector():
   assert len(v1) == 1536
   assert v1 == v2  # Same text generates identical vector
   assert v1 != v3  # Different text generates different vector
+

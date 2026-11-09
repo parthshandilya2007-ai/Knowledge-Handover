@@ -5,6 +5,7 @@ import { uploadMulter, validateMagicBytes } from "../middleware/upload.middlewar
 import {
   uploadSource,
   createNotesSource,
+  connectGithubSource,
   listProjectSources,
   updateSourceVisibility,
   reprocessSource,
@@ -28,6 +29,7 @@ projectSourceRouter.post(
   uploadSource
 );
 projectSourceRouter.post("/notes", requireProjectAccess("contributor"), createNotesSource);
+projectSourceRouter.post("/github", requireProjectAccess("contributor"), connectGithubSource);
 
 // Direct source-level routes: /api/v1/sources/:id/...
 router.patch("/:id/visibility", updateSourceVisibility);

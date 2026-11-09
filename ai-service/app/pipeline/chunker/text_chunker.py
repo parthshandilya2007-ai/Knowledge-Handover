@@ -19,6 +19,59 @@ def chunk_document(
     if not raw_text:
         return []
 
+    # Handle structured items (e.g. GitHub entities) item-by-item to preserve strict entity boundaries
+    if parsed_doc.metadata.get("sourceType") == "github":
+        chunks = []
+        order = 1
+        for loc in parsed_doc.locators:
+            item_text = loc.text.strip()
+            if not item_text:
+                continue
+
+            header = f"[{loc.itemType.upper()}: {loc.itemId}] " if loc.itemType and loc.itemId else ""
+            full_text = f"{header}{item_text}" if not item_text.startswith("[") else item_text
+
+            locator_dict: Dict[str, Any] = {}
+            if loc.itemType:
+                locator_dict["itemType"] = loc.itemType
+            if loc.itemId:
+                locator_dict["itemId"] = loc.itemId
+            if loc.url:
+                locator_dict["url"] = loc.url
+
+            if len(full_text) <= chunk_size_chars:
+                chunks.append({
+                    "chunkId": str(uuid.uuid4()),
+                    "sourceId": source_id,
+                    "projectId": project_id,
+                    "order": order,
+                    "text": full_text,
+                    "textHash": hashlib.sha256(full_text.encode("utf-8")).hexdigest(),
+                    "locator": locator_dict
+                })
+                order += 1
+            else:
+                # Sub-chunk larger items like README
+                item_start = 0
+                while item_start < len(full_text):
+                    item_end = min(item_start + chunk_size_chars, len(full_text))
+                    sub_text = full_text[item_start:item_end].strip()
+                    if sub_text:
+                        chunks.append({
+                            "chunkId": str(uuid.uuid4()),
+                            "sourceId": source_id,
+                            "projectId": project_id,
+                            "order": order,
+                            "text": sub_text,
+                            "textHash": hashlib.sha256(sub_text.encode("utf-8")).hexdigest(),
+                            "locator": locator_dict
+                        })
+                        order += 1
+                    if item_end >= len(full_text):
+                        break
+                    item_start = item_end - overlap_chars
+        return chunks
+
     chunks = []
     start = 0
     order = 1
