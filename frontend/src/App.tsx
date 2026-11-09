@@ -17,6 +17,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { SourcesPage } from "./pages/SourcesPage";
 import { ProcessingPage } from "./pages/ProcessingPage";
 import { HandoverDashboardPage } from "./pages/HandoverDashboardPage";
+import { ReviewPage } from "./pages/ReviewPage";
 import { StagePlaceholderPage } from "./pages/StagePlaceholderPage";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -175,11 +176,7 @@ export function App() {
             element={
               <ProtectedRoute>
                 <AppLayout>
-                  <StagePlaceholderPage
-                    stageNumber={7}
-                    title="Verification & Review"
-                    description="Audit verified, uncertain, and conflicting facts side-by-side, edit claims, and approve immutable handover report snapshots."
-                  />
+                  <ReviewPage />
                 </AppLayout>
               </ProtectedRoute>
             }

@@ -151,3 +151,4 @@ def test_endpoint_internal_generate():
     sections = data["data"]["sections"]
     assert len(sections) == 11
     assert any(s["key"] == "first_week_plan" for s in sections)
+

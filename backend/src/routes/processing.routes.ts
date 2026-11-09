@@ -11,7 +11,12 @@ import {
   listProjectDecisions,
   listProjectRisks,
   listProjectDependencies,
-  getEvidenceSnippet
+  getEvidenceSnippet,
+  updateFact,
+  createFact,
+  deleteFact,
+  resolveConflict,
+  listProjectAuditLogs,
 } from "../controllers/fact.controller.js";
 
 // Project-nested router: /api/v1/projects/:id/...
@@ -24,13 +29,18 @@ projectProcessingRouter.get("/tasks", requireProjectAccess("viewer"), listProjec
 projectProcessingRouter.get("/decisions", requireProjectAccess("viewer"), listProjectDecisions);
 projectProcessingRouter.get("/risks", requireProjectAccess("viewer"), listProjectRisks);
 projectProcessingRouter.get("/dependencies", requireProjectAccess("viewer"), listProjectDependencies);
+projectProcessingRouter.get("/audit-logs", requireProjectAccess("viewer"), listProjectAuditLogs);
 
-// Direct top-level router for jobs and evidence
+// Direct top-level router for jobs, facts, and evidence
 const router = Router();
 router.use(requireAuth);
 
 router.get("/jobs/:id", getJobStatus);
 router.get("/evidence/:id", getEvidenceSnippet);
+router.post("/facts/resolve-conflict", resolveConflict);
+router.patch("/facts/:kind/:id", updateFact);
+router.post("/facts/:kind", createFact);
+router.delete("/facts/:kind/:id", deleteFact);
 
 export { router as processingRouter };
 

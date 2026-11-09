@@ -8,6 +8,8 @@ import {
   approveSection,
   approveReport,
   getApprovals,
+  exportReportPdf,
+  shareReport,
 } from "../controllers/handover.controller.js";
 
 // Project-nested handover routes: /api/v1/projects/:id/handover
@@ -20,7 +22,10 @@ projectHandoverRouter.get("/", getProjectHandover);
 export const handoverRouter = Router();
 handoverRouter.use(requireAuth);
 handoverRouter.get("/:id", getHandoverById);
+handoverRouter.get("/:id/export.pdf", exportReportPdf);
+handoverRouter.post("/:id/share", shareReport);
 handoverRouter.patch("/:id/items/:itemId", updateReportItem);
 handoverRouter.post("/:id/sections/:key/approve", approveSection);
 handoverRouter.post("/:id/approve", approveReport);
 handoverRouter.get("/:id/approvals", getApprovals);
+

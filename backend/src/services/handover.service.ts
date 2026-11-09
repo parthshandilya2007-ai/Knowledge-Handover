@@ -13,6 +13,7 @@ import { User } from "../models/User.js";
 import { accessService } from "./access.service.js";
 import { auditLogService } from "./auditLog.service.js";
 import { internalClient } from "./internalClient.service.js";
+import { pdfExportService } from "./pdfExport.service.js";
 import { getIO } from "../sockets/socketServer.js";
 
 export class HandoverService {
@@ -434,6 +435,82 @@ export class HandoverService {
     }
 
     return report.approvals;
+  }
+
+  /**
+   * Generates a styled, permission-filtered PDF stream for a handover report.
+   */
+  async exportReportPdf(reportId: string, userId: string): Promise<{ buffer: Buffer; filename: string }> {
+    const report = await HandoverReport.findById(reportId);
+    if (!report) {
+      throw new Error("Report not found");
+    }
+
+    const canView = await accessService.canViewProject(userId, report.projectId.toString());
+    if (!canView) {
+      throw new Error("FORBIDDEN: You do not have permission to view or export this report");
+    }
+
+    // Apply strict viewer-level filtering to redact unauthorized sources
+    const filteredReport = await accessService.filterReportForUser(userId, report);
+
+    const project = await Project.findById(report.projectId);
+    const projectName = project ? project.name.replace(/[^a-zA-Z0-9_-]/g, "_") : "handover";
+    const filename = `Handover_${projectName}_v${report.version}.pdf`;
+
+    const buffer = await pdfExportService.generateReportPdf(filteredReport);
+
+    await auditLogService.recordAction(userId, "report_export_pdf", "report", reportId, undefined, {
+      version: report.version,
+      filename,
+    });
+
+    return { buffer, filename };
+  }
+
+  /**
+   * Shares a handover report with an expiration date and logs access.
+   */
+  async shareReport(
+    reportId: string,
+    userId: string,
+    payload: { targetUserId?: string; expiresInHours?: number }
+  ): Promise<{ shareUrl: string; expiresAt: Date }> {
+    const report = await HandoverReport.findById(reportId);
+    if (!report) {
+      throw new Error("Report not found");
+    }
+
+    const canManage = await accessService.canManageProject(userId, report.projectId.toString());
+    const canContribute = await accessService.canContributeProject(userId, report.projectId.toString());
+    if (!canManage && !canContribute) {
+      throw new Error("FORBIDDEN: You do not have permission to share this handover report");
+    }
+
+    const hours = payload.expiresInHours || 168; // default 7 days
+    const expiresAt = new Date(Date.now() + hours * 3600 * 1000);
+    const targetUserId = payload.targetUserId || userId;
+
+    report.shares.push({
+      userId: new Types.ObjectId(targetUserId),
+      expiresAt,
+      viewLog: [],
+    });
+
+    if (report.status === "approved") {
+      report.status = "shared";
+    }
+
+    await report.save();
+
+    await auditLogService.recordAction(userId, "report_share", "report", reportId, undefined, {
+      sharedWith: targetUserId,
+      expiresAt,
+    });
+
+    const shareUrl = `/handover/${reportId}`;
+
+    return { shareUrl, expiresAt };
   }
 }
 

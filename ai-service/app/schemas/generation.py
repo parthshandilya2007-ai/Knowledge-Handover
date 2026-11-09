@@ -50,3 +50,4 @@ class ReportGenerateResponseData(BaseModel):
 class ReportGenerateResponse(BaseModel):
     ok: bool = True
     data: ReportGenerateResponseData
+

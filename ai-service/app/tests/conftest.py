@@ -7,3 +7,4 @@ os.environ.setdefault("MONGODB_URI", "mongodb://localhost:27017/knowledge-handov
 os.environ.setdefault("OPENAI_MODEL", "gpt-4o")
 os.environ.setdefault("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
 os.environ.setdefault("EMBEDDING_PROVIDER", "deterministic")
+
