@@ -128,3 +128,4 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onActionClick }
     </motion.div>
   );
 };
+

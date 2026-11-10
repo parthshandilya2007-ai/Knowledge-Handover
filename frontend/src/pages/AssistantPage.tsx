@@ -312,3 +312,4 @@ export function AssistantPage() {
     </div>
   );
 }
+

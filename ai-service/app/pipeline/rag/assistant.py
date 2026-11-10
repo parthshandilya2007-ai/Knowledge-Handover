@@ -211,3 +211,4 @@ async def answer_project_question(
     except Exception as e:
         logger.error(f"Error during OpenAI RAG answer generation: {e}. Falling back to deterministic engine.")
         return synthesize_deterministic_chat_response(question, retrieved_chunks)
+

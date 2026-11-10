@@ -175,3 +175,23 @@ export async function shareReport(req: AuthenticatedRequest, res: Response): Pro
     sendError(res, isForbidden ? "FORBIDDEN" : isNotFound ? "NOT_FOUND" : "SHARE_FAILED", message, isForbidden ? 403 : isNotFound ? 404 : 500);
   }
 }
+
+export async function getViewLogs(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const projectId = req.params.id;
+    const userId = req.user!._id.toString();
+
+    const result = await handoverService.getViewLogs(projectId, userId);
+    sendSuccess(res, result);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    const isForbidden = message.startsWith("FORBIDDEN");
+    const isNotFound = message.includes("not found");
+    sendError(
+      res,
+      isForbidden ? "FORBIDDEN" : isNotFound ? "NOT_FOUND" : "FETCH_VIEW_LOGS_FAILED",
+      message,
+      isForbidden ? 403 : isNotFound ? 404 : 500
+    );
+  }
+}

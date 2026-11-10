@@ -54,6 +54,11 @@ export function setupSocketIO(server: HttpServer): SocketIOServer {
     const user = socket.data.user;
     console.log(`[Socket.IO] Authenticated user connected: ${user?.email} (Socket: ${socket.id})`);
 
+    // Automatically join user-specific notification room
+    if (user?.userId) {
+      socket.join(`user:${user.userId}`);
+    }
+
     socket.on("join_project", async (data: { projectId: string }, callback?: (response: unknown) => void) => {
       try {
         const projectId = data?.projectId;

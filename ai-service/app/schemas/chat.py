@@ -34,3 +34,4 @@ class ChatResponseData(BaseModel):
 class ChatResponse(BaseModel):
     ok: bool = True
     data: ChatResponseData
+

@@ -10,8 +10,10 @@ import { Source } from "../models/Source.js";
 import { Task, Decision, Risk, Dependency } from "../models/Fact.js";
 import { Evidence } from "../models/Evidence.js";
 import { User } from "../models/User.js";
+import { AuditLog } from "../models/AuditLog.js";
 import { accessService } from "./access.service.js";
 import { auditLogService } from "./auditLog.service.js";
+import { notificationService } from "./notification.service.js";
 import { internalClient } from "./internalClient.service.js";
 import { pdfExportService } from "./pdfExport.service.js";
 import { getIO } from "../sockets/socketServer.js";
@@ -181,6 +183,15 @@ export class HandoverService {
       });
     }
 
+    // Notify project members about new handover draft
+    await notificationService.notifyProjectMembers(
+      projectId,
+      "report_generated",
+      `Handover report v${nextVersion} drafted and ready for review`,
+      "/handover",
+      userId
+    );
+
     return newReport;
   }
 
@@ -201,6 +212,16 @@ export class HandoverService {
       return null;
     }
 
+    // Record view in AuditLog
+    await auditLogService.recordAction(
+      userId,
+      "report_viewed",
+      "report",
+      report._id.toString(),
+      undefined,
+      { version: report.version, projectId }
+    );
+
     return await accessService.filterReportForUser(userId, report);
   }
 
@@ -217,6 +238,16 @@ export class HandoverService {
     if (!canView) {
       throw new Error("FORBIDDEN: You do not have access to this project");
     }
+
+    // Record view in AuditLog
+    await auditLogService.recordAction(
+      userId,
+      "report_viewed",
+      "report",
+      report._id.toString(),
+      undefined,
+      { version: report.version, projectId: report.projectId.toString() }
+    );
 
     return await accessService.filterReportForUser(userId, report);
   }
@@ -356,6 +387,15 @@ export class HandoverService {
       });
     }
 
+    // Notify project members
+    await notificationService.notifyProjectMembers(
+      report.projectId.toString(),
+      "section_approved",
+      `Section '${section.title}' was approved in handover report v${report.version}`,
+      "/handover",
+      userId
+    );
+
     return { report, section };
   }
 
@@ -413,6 +453,15 @@ export class HandoverService {
         status: report.status,
       });
     }
+
+    // Notify project members about report approval
+    await notificationService.notifyProjectMembers(
+      report.projectId.toString(),
+      "report_approved",
+      `Handover report v${report.version} was officially approved and locked!`,
+      "/handover",
+      userId
+    );
 
     return report;
   }
@@ -508,9 +557,116 @@ export class HandoverService {
       expiresAt,
     });
 
+    if (payload.targetUserId && payload.targetUserId !== userId) {
+      await notificationService.createNotification(
+        payload.targetUserId,
+        "report_shared",
+        `You have been granted access to handover report v${report.version}`,
+        "/handover"
+      );
+    }
+
     const shareUrl = `/handover/${reportId}`;
 
     return { shareUrl, expiresAt };
+  }
+
+  /**
+   * Retrieves aggregated view logs and viewer audit trail for managers.
+   */
+  async getViewLogs(
+    projectId: string,
+    userId: string
+  ): Promise<{
+    stats: {
+      totalViews: number;
+      uniqueViewers: number;
+      totalPdfExports: number;
+      totalShares: number;
+    };
+    timeline: Array<{
+      id: string;
+      action: string;
+      actor: {
+        id: string;
+        name: string;
+        email: string;
+        avatarUrl?: string;
+      };
+      timestamp: Date;
+      details: Record<string, unknown>;
+    }>;
+  }> {
+    const canManage = await accessService.canManageProject(userId, projectId);
+    if (!canManage) {
+      throw new Error("FORBIDDEN: Only project managers and admins can inspect view logs");
+    }
+
+    const reports = await HandoverReport.find({ projectId: new Types.ObjectId(projectId) });
+    const reportIds = reports.map((r) => r._id.toString());
+
+    const logs = await AuditLog.find({
+      $or: [
+        { entityId: { $in: reportIds } },
+        { entityId: projectId },
+        { "after.projectId": projectId },
+      ],
+      action: {
+        $in: [
+          "report_viewed",
+          "report_export_pdf",
+          "report_share",
+          "report_approve",
+          "report_section_approve",
+          "report_generate",
+        ],
+      },
+    })
+      .sort({ at: -1 })
+      .limit(100)
+      .populate("actorId", "name email avatarUrl");
+
+    let totalViews = 0;
+    let totalPdfExports = 0;
+    let totalShares = 0;
+    const viewerIds = new Set<string>();
+
+    const timeline = logs.map((log) => {
+      const actor = log.actorId as any;
+      const actorId = actor?._id?.toString() || log.actorId?.toString() || "system";
+
+      if (log.action === "report_viewed") {
+        totalViews++;
+        viewerIds.add(actorId);
+      } else if (log.action === "report_export_pdf") {
+        totalPdfExports++;
+      } else if (log.action === "report_share") {
+        totalShares++;
+      }
+
+      return {
+        id: log._id.toString(),
+        action: log.action,
+        actor: {
+          id: actorId,
+          name: actor?.name || "System User",
+          email: actor?.email || "",
+          avatarUrl: actor?.avatarUrl,
+        },
+        timestamp: log.at,
+        details: (log.after || log.before || {}) as Record<string, unknown>,
+      };
+    });
+
+    return {
+      stats: {
+        totalViews,
+        uniqueViewers: viewerIds.size,
+        totalPdfExports,
+        totalShares,
+      },
+      timeline,
+    };
   }
 }
 

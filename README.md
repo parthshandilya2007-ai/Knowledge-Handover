@@ -33,6 +33,7 @@ npm run verify:stage0
 - **Verbatim Quote Verification:** All extracted facts require verifiable verbatim quote substrings from source chunks. Unsupported claims are flagged `uncertain` or dropped.
 - **Evidence-Linked Handover Reports:** 11-section structured reports (Overview, Completed Work, Pending Work, Responsibilities, Decisions, Dependencies, Risks, Open Questions, Next Actions, First-Week Plan, Important Links) with citations, conflict detection, and viewer-level source redaction.
 - **Contextual AI Assistant (Stage 8):** Permission-aware natural language Q&A interface powered by Atlas Vector Search retrieval strictly pre-filtered by `allowedSourceIds`. Grounded with clickable `<CitationChip>` components and grounded next action suggestions. Employs graceful fallback with `insufficientEvidence: true` when facts are unsupported.
+- **PDF Export, Notification Center & Manager View Logs (Stage 9):** Streaming PDF generation via `pdfkit` with viewer permission redaction, real-time user notification center with Socket.IO pushes and unread badges, and role-protected manager view logs tracking document views, PDF exports, and share activity.
 
 For detailed architecture diagrams, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).  
 For the complete API contract and schema specifications, see [CONTRACTS.md](docs/CONTRACTS.md).  

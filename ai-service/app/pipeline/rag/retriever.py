@@ -71,3 +71,4 @@ async def retrieve_authorized_chunks(
 
     top_chunks = [ch for _, ch in scored_chunks[:top_k]]
     return top_chunks
+

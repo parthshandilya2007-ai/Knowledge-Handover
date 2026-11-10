@@ -10,19 +10,21 @@ import {
   History,
   ThumbsUp,
   ThumbsDown,
+  Eye,
 } from "lucide-react";
 import { api } from "../lib/api/client";
 import { Project, IHandoverReport } from "../types";
 import { LoadingSpinner } from "../components/common/States";
 import { ConflictResolver, ConflictingPair } from "../features/review/ConflictResolver";
 import { AuditTrailList, AuditLogItem } from "../features/review/AuditTrailList";
+import { ManagerViewLogs } from "../features/review/ManagerViewLogs";
 import { ShareModal } from "../features/review/ShareModal";
 import { CitationChip } from "../components/common/CitationChip";
 
 export function ReviewPage() {
   const queryClient = useQueryClient();
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"conflicts" | "uncertain" | "verified" | "audit">("conflicts");
+  const [activeTab, setActiveTab] = useState<"conflicts" | "uncertain" | "verified" | "audit" | "view_logs">("conflicts");
   const [kindFilter, setKindFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -360,6 +362,18 @@ export function ReviewPage() {
               <History className="w-4 h-4 text-accent" />
               Audit Log ({auditLogs.length})
             </button>
+
+            <button
+              onClick={() => setActiveTab("view_logs")}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === "view_logs"
+                  ? "bg-panel text-cyan-300 border border-cyan-500/30 shadow-md"
+                  : "text-text-secondary hover:text-white"
+              }`}
+            >
+              <Eye className="w-4 h-4 text-cyan-400" />
+              Manager View Logs
+            </button>
           </div>
 
           {/* TAB 1: CONFLICT RESOLVER */}
@@ -528,6 +542,9 @@ export function ReviewPage() {
 
           {/* TAB 4: AUDIT TRAIL */}
           {activeTab === "audit" && <AuditTrailList logs={auditLogs} />}
+
+          {/* TAB 5: MANAGER VIEW LOGS */}
+          {activeTab === "view_logs" && <ManagerViewLogs projectId={selectedProjectId} />}
         </div>
       )}
 

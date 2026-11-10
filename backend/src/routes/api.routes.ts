@@ -7,6 +7,7 @@ import { projectRouter } from "./project.routes.js";
 import { sourceRouter, projectSourceRouter } from "./source.routes.js";
 import { processingRouter, projectProcessingRouter } from "./processing.routes.js";
 import { handoverRouter, projectHandoverRouter } from "./handover.routes.js";
+import { notificationRouter } from "./notification.routes.js";
 
 const router = Router();
 
@@ -23,6 +24,7 @@ router.use("/projects/:id/handover", projectHandoverRouter);
 router.use("/projects/:id", projectProcessingRouter);
 router.use("/sources", sourceRouter);
 router.use("/handover", handoverRouter);
+router.use("/notifications", notificationRouter);
 router.use("/", processingRouter);
 
 export { router as apiRouter };

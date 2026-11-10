@@ -341,6 +341,7 @@ interface IChatResponse {
 ### 4.7 Handover Reports
 - `POST /api/v1/projects/:id/handover/generate` $\rightarrow$ `{ report }`
 - `GET /api/v1/projects/:id/handover` $\rightarrow$ `{ report }` (viewer-filtered)
+- `GET /api/v1/projects/:id/handover/view-logs` $\rightarrow$ `{ stats: { totalViews, uniqueViewers, totalPdfExports, totalShares }, timeline: [] }` (manager-only)
 - `PATCH /api/v1/handover/:id/items/:itemId` $\rightarrow$ `{ item }`
 - `POST /api/v1/handover/:id/sections/:key/approve` $\rightarrow$ `{ section }`
 - `POST /api/v1/handover/:id/approve` $\rightarrow$ `{ report }`
@@ -353,8 +354,9 @@ interface IChatResponse {
 
 ### 4.9 System & Notifications
 - `GET /api/v1/system/status` $\rightarrow$ `{ openai: boolean, github: boolean, storage: string, smtp: boolean, aiService: boolean }`
-- `GET /api/v1/notifications` $\rightarrow$ `{ notifications: [] }`
+- `GET /api/v1/notifications` $\rightarrow$ `{ notifications: [], unreadCount: number }`
 - `PATCH /api/v1/notifications/:id/read` $\rightarrow$ `{ notification }`
+- `POST /api/v1/notifications/read-all` $\rightarrow$ `{ count: number, message: string }`
 
 ---
 

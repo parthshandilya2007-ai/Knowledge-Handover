@@ -10,6 +10,7 @@ import {
   getApprovals,
   exportReportPdf,
   shareReport,
+  getViewLogs,
 } from "../controllers/handover.controller.js";
 
 // Project-nested handover routes: /api/v1/projects/:id/handover
@@ -17,6 +18,7 @@ export const projectHandoverRouter = Router({ mergeParams: true });
 projectHandoverRouter.use(requireAuth);
 projectHandoverRouter.post("/generate", generateHandover);
 projectHandoverRouter.get("/", getProjectHandover);
+projectHandoverRouter.get("/view-logs", getViewLogs);
 
 // Top-level handover routes: /api/v1/handover
 export const handoverRouter = Router();

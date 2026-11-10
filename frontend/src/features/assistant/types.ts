@@ -21,3 +21,4 @@ export interface AssistantChatResponse {
   suggestedActions: string[];
   insufficientEvidence: boolean;
 }
+
