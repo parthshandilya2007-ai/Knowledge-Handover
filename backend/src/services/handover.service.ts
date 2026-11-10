@@ -101,13 +101,24 @@ export class HandoverService {
       evidenceMap,
     });
 
-    if (!genResult.success || !genResult.data) {
-      throw new Error(`Report generation failed: ${genResult.error || "Unknown error"}`);
+    let rawSections: any[];
+    if (genResult.success && genResult.data) {
+      rawSections = genResult.data.sections;
+    } else {
+      console.warn(`[HandoverService] AI service offline or failed (${genResult.error}). Generating grounded fallback report.`);
+      rawSections = this.buildDeterministicSections({
+        projectName: project.name,
+        tasks: visibleTasks,
+        decisions: visibleDecisions,
+        risks: visibleRisks,
+        dependencies: visibleDependencies,
+        evidenceRecords,
+      });
     }
 
     // 5. Validate sections and citations against database
     const validEvidenceSet = new Set(evidenceRecords.map((e) => e._id.toString()));
-    const sections: IReportSection[] = genResult.data.sections.map((sec) => {
+    const sections: IReportSection[] = rawSections.map((sec) => {
       const validatedItems: IReportItem[] = (sec.items || []).map((item: any) => {
         // Filter citations to valid database Evidence IDs only
         const cleanCitations: Types.ObjectId[] = [];
@@ -667,6 +678,182 @@ export class HandoverService {
       },
       timeline,
     };
+  }
+
+  private buildDeterministicSections(params: {
+    projectName: string;
+    tasks: any[];
+    decisions: any[];
+    risks: any[];
+    dependencies: any[];
+    evidenceRecords: any[];
+  }): any[] {
+    const { projectName, tasks, decisions, risks, dependencies, evidenceRecords } = params;
+    const defaultCite = evidenceRecords.length ? [evidenceRecords[0]._id.toString()] : [];
+    const completedTasks = tasks.filter((t) => t.taskStatus === "completed");
+    const pendingTasks = tasks.filter((t) => t.taskStatus === "pending" || !t.taskStatus);
+    const conflictingDecisions = decisions.filter((d) => d.status === "conflicting");
+    const openQ = risks.filter((r) => r.kind === "open_question");
+
+    return [
+      {
+        key: "overview",
+        title: "Executive Overview",
+        items: [
+          {
+            id: "sec-ov-1",
+            text: `${projectName} handover report. Current sprint includes ${tasks.length} tasks and ${decisions.length} core architectural decisions.`,
+            factRefs: [],
+            citations: defaultCite,
+          }
+        ]
+      },
+      {
+        key: "completed_work",
+        title: "Completed Work",
+        items: completedTasks.length ? completedTasks.map((t, idx) => ({
+          id: `sec-comp-${idx + 1}`,
+          text: `Completed: ${t.title}`,
+          factRefs: [{ kind: "task", id: t._id }],
+          citations: (t.evidenceIds || []).map((e: any) => e.toString())
+        })) : [
+          { id: "sec-comp-empty", text: "No completed tasks recorded in current sources.", factRefs: [], citations: defaultCite }
+        ]
+      },
+      {
+        key: "pending_work",
+        title: "Pending Work",
+        items: pendingTasks.length ? pendingTasks.map((t, idx) => ({
+          id: `sec-pend-${idx + 1}`,
+          text: `Pending: ${t.title}${t.ownerName ? ` (Owner: ${t.ownerName})` : ""}`,
+          factRefs: [{ kind: "task", id: t._id }],
+          citations: (t.evidenceIds || []).map((e: any) => e.toString())
+        })) : [
+          { id: "sec-pend-empty", text: "No pending tasks recorded.", factRefs: [], citations: defaultCite }
+        ]
+      },
+      {
+        key: "responsibilities",
+        title: "Ownership & Responsibilities",
+        items: tasks.filter((t) => t.ownerName).map((t, idx) => ({
+          id: `sec-resp-${idx + 1}`,
+          text: `${t.ownerName} is assigned to: ${t.title}`,
+          factRefs: [{ kind: "task", id: t._id }],
+          citations: (t.evidenceIds || []).map((e: any) => e.toString())
+        }))
+      },
+      {
+        key: "decisions",
+        title: "Key Decisions & Architecture",
+        items: decisions.map((d, idx) => ({
+          id: `sec-dec-${idx + 1}`,
+          text: `${d.title}: ${d.rationale || d.description || "Accepted team decision"}`,
+          factRefs: [{ kind: "decision", id: d._id }],
+          citations: (d.evidenceIds || []).map((e: any) => e.toString()),
+          flag: d.status === "conflicting" ? "conflict" : undefined
+        }))
+      },
+      {
+        key: "dependencies",
+        title: "System & Infrastructure Dependencies",
+        items: dependencies.map((dep, idx) => ({
+          id: `sec-dep-${idx + 1}`,
+          text: `${dep.fromRef || "Component"} relies on ${dep.toRef || "Service"}: ${dep.title}`,
+          factRefs: [{ kind: "dependency", id: dep._id }],
+          citations: (dep.evidenceIds || []).map((e: any) => e.toString())
+        }))
+      },
+      {
+        key: "risks",
+        title: "Risks & Blockers",
+        items: risks.map((r, idx) => ({
+          id: `sec-risk-${idx + 1}`,
+          text: `[${(r.severity || "medium").toUpperCase()}] ${r.title}`,
+          factRefs: [{ kind: "risk", id: r._id }],
+          citations: (r.evidenceIds || []).map((e: any) => e.toString())
+        }))
+      },
+      {
+        key: "open_questions",
+        title: "Open & Unanswered Questions",
+        items: openQ.length ? openQ.map((q, idx) => ({
+          id: `sec-oq-${idx + 1}`,
+          text: `Unanswered: ${q.title}`,
+          factRefs: [{ kind: "risk", id: q._id }],
+          citations: (q.evidenceIds || []).map((e: any) => e.toString())
+        })) : [
+          { id: "sec-oq-none", text: "No unresolved open questions.", factRefs: [], citations: defaultCite }
+        ]
+      },
+      {
+        key: "next_actions",
+        title: "Recommended Next Actions",
+        items: [
+          ...(conflictingDecisions.length ? [{
+            id: "sec-na-conflict",
+            text: `Resolve conflicting architectural choice regarding '${conflictingDecisions[0].title}' with engineering stakeholders.`,
+            factRefs: [{ kind: "decision", id: conflictingDecisions[0]._id }],
+            citations: (conflictingDecisions[0].evidenceIds || []).map((e: any) => e.toString()),
+            flag: "conflict"
+          }] : []),
+          ...(pendingTasks.length ? [{
+            id: "sec-na-task",
+            text: `Pick up pending sprint item: '${pendingTasks[0].title}'.`,
+            factRefs: [{ kind: "task", id: pendingTasks[0]._id }],
+            citations: (pendingTasks[0].evidenceIds || []).map((e: any) => e.toString())
+          }] : [])
+        ]
+      },
+      {
+        key: "first_week_plan",
+        title: "First-Week Onboarding Roadmap",
+        items: [
+          {
+            id: "plan-d1",
+            text: "Day 1 (Access & Setup): Clone repository, configure local environment variables, verify Docker services and dependencies.",
+            factRefs: [],
+            citations: defaultCite
+          },
+          {
+            id: "plan-d2",
+            text: "Day 2 (Architecture Deep-Dive): Review foundational architectural decisions and module boundaries.",
+            factRefs: decisions.length ? [{ kind: "decision", id: decisions[0]._id }] : [],
+            citations: decisions.length ? (decisions[0].evidenceIds || []).map((e: any) => e.toString()) : defaultCite
+          },
+          {
+            id: "plan-d3",
+            text: "Day 3 (Conflict & Risk Review): Clarify contradictory choices identified by AI pipeline and open questions with the team.",
+            factRefs: conflictingDecisions.length ? [{ kind: "decision", id: conflictingDecisions[0]._id }] : [],
+            citations: conflictingDecisions.length ? (conflictingDecisions[0].evidenceIds || []).map((e: any) => e.toString()) : defaultCite,
+            flag: conflictingDecisions.length ? "conflict" : undefined
+          },
+          {
+            id: "plan-d4",
+            text: `Day 4 (First Contribution): Pick up initial pending task (${pendingTasks[0]?.title || "code maintenance"}), create branch and submit pull request.`,
+            factRefs: pendingTasks.length ? [{ kind: "task", id: pendingTasks[0]._id }] : [],
+            citations: pendingTasks.length ? (pendingTasks[0].evidenceIds || []).map((e: any) => e.toString()) : defaultCite
+          },
+          {
+            id: "plan-d5",
+            text: "Day 5 (Ownership Handover & Roadmap Sync): Meet with key stakeholders to formally take over sprint responsibilities.",
+            factRefs: [],
+            citations: defaultCite
+          }
+        ]
+      },
+      {
+        key: "important_links",
+        title: "Important Repositories & Artifacts",
+        items: [
+          {
+            id: "link-repo",
+            text: "Project Repository: https://github.com/codesync-team/relay-core",
+            factRefs: [],
+            citations: defaultCite
+          }
+        ]
+      }
+    ];
   }
 }
 

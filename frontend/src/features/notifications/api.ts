@@ -12,3 +12,4 @@ export async function markNotificationAsRead(id: string): Promise<{ notification
 export async function markAllNotificationsAsRead(): Promise<{ count: number; message: string }> {
   return api.post<{ count: number; message: string }>("/notifications/read-all");
 }
+

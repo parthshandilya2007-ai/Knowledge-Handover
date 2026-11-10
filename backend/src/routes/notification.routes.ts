@@ -15,3 +15,4 @@ router.patch("/:id/read", markNotificationAsRead);
 router.post("/read-all", markAllNotificationsAsRead);
 
 export { router as notificationRouter };
+

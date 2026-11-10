@@ -1,0 +1,75 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: handover-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: knowledge_handover
+    volumes:
+      - mongo-data:/data/db
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: handover-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/knowledge_handover
+      BACKEND_INTERNAL_URL: http://backend:5000
+      INTERNAL_SERVICE_KEY: dev-internal-service-key-secret-12345
+      WEBHOOK_HMAC_SECRET: dev-webhook-hmac-secret-signature-key
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: gpt-4o-mini
+      OPENAI_EMBEDDING_MODEL: text-embedding-3-small
+      EMBEDDING_PROVIDER: deterministic
+      VECTOR_INDEX_NAME: vector_index
+    depends_on:
+      - mongodb
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: handover-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: development
+      CLIENT_URL: http://localhost:5173
+      MONGODB_URI: mongodb://mongodb:27017/knowledge_handover
+      AI_SERVICE_URL: http://ai-service:8000
+      INTERNAL_SERVICE_KEY: dev-internal-service-key-secret-12345
+      WEBHOOK_HMAC_SECRET: dev-webhook-hmac-secret-signature-key
+      TOKEN_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      JWT_SECRET: dev-jwt-access-secret-32-chars-long-min
+      JWT_REFRESH_SECRET: dev-jwt-refresh-secret-32-chars-long-min
+      STORAGE_DRIVER: local
+    depends_on:
+      - mongodb
+      - ai-service
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: handover-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:5000/api/v1
+      VITE_SOCKET_URL: http://localhost:5000
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:

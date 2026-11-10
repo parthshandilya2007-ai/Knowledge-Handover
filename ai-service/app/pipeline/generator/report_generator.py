@@ -389,6 +389,8 @@ def generate_deterministic_report(
     # 11. IMPORTANT LINKS
     links_items: List[GeneratedReportItem] = []
     for ev_id, ev_info in evidence_map.items():
+        if not isinstance(ev_info, dict):
+            continue
         locator = ev_info.get("locator") or {}
         url = ev_info.get("url") or locator.get("url")
         if url:

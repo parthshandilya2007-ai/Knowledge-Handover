@@ -416,3 +416,47 @@ Internal endpoints are protected by shared secrets and are **never** accessible 
   - `report:updated`: `{ reportId, version, status }`
   - `notification:new`: `{ notification }`
 
+---
+
+## 7. Manager View Logs & Audit Specifications
+
+### 7.1 View Logs Endpoint
+- `GET /api/v1/projects/:id/handover/view-logs`
+- Protected by `accessService.canManageProject` (Admin or Project Manager only, returns 403 Forbidden for developers).
+- Response shape:
+  ```json
+  {
+    "ok": true,
+    "data": {
+      "stats": {
+        "totalViews": 12,
+        "uniqueViewers": 3,
+        "totalPdfExports": 2,
+        "totalShares": 1
+      },
+      "timeline": [
+        {
+          "at": "2026-11-10T04:00:00.000Z",
+          "action": "report_viewed",
+          "actorName": "Jordan Lee",
+          "actorEmail": "incoming-dev@hackathon.dev",
+          "details": { "version": 1 }
+        }
+      ]
+    }
+  }
+  ```
+
+### 7.2 PDF Export Endpoint
+- `GET /api/v1/handover/:id/export.pdf`
+- Streams binary PDF (`application/pdf`) with `%PDF-` header.
+- Enforces viewer-level permission filtering before document generation.
+
+---
+
+## 8. Verification & Automation Scripts Contract
+
+- `npm run seed`: Executes `scripts/seed.ts` to populate the database with demo users (Admin, PM, Developer), org, project, multi-format sources, reconciled facts with conflict detection, initial handover report, sample notifications, and audit log entries.
+- `npm run test:e2e`: Runs `scripts/e2e.ts` performing a full 13-step end-to-end integration test spanning registration, org & project creation, multi-source ingestion, pipeline analysis, conflict detection, fact locking, 11-section report generation, section approval, expiring share links, incoming developer permission boundaries, assistant grounded Q&A, and PDF streaming.
+
+

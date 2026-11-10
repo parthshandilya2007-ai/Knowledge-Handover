@@ -43,3 +43,4 @@ export async function markAllNotificationsAsRead(req: AuthenticatedRequest, res:
     sendError(res, "UPDATE_NOTIFICATIONS_FAILED", message, 500);
   }
 }
+

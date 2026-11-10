@@ -12,3 +12,4 @@ export interface NotificationsResponse {
   notifications: INotification[];
   unreadCount: number;
 }
+

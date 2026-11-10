@@ -148,6 +148,11 @@ export async function updateFact(req: AuthenticatedRequest, res: Response, next:
     fact.origin = "user";
     fact.editedBy = req.user!._id;
     fact.editedAt = new Date();
+    if (req.body.reviewStatus) {
+      fact.reviewStatus = req.body.reviewStatus;
+    } else if (fact.reviewStatus !== "approved") {
+      fact.reviewStatus = "edited";
+    }
 
     await fact.save();
 

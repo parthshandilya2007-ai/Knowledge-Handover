@@ -1,0 +1,86 @@
+services:
+  # -------------------------------------------------------------
+  # Express Backend Service (System of Record & Security Gate)
+  # -------------------------------------------------------------
+  - type: web
+    name: knowledge-handover-backend
+    runtime: node
+    plan: starter
+    region: oregon
+    branch: main
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CLIENT_URL
+        value: https://knowledge-handover.vercel.app
+      - key: STORAGE_DRIVER
+        value: local
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: INTERNAL_SERVICE_KEY
+        generateValue: true
+      - key: WEBHOOK_HMAC_SECRET
+        generateValue: true
+      - key: TOKEN_ENCRYPTION_KEY
+        generateValue: true
+      - key: AI_SERVICE_URL
+        fromService:
+          type: web
+          name: knowledge-handover-ai
+          property: host
+
+  # -------------------------------------------------------------
+  # Python FastAPI AI Service (Stateless Intelligence & Chunks)
+  # -------------------------------------------------------------
+  - type: web
+    name: knowledge-handover-ai
+    runtime: python
+    plan: starter
+    region: oregon
+    branch: main
+    rootDir: ai-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /internal/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: MONGODB_URI
+        sync: false
+      - key: BACKEND_INTERNAL_URL
+        fromService:
+          type: web
+          name: knowledge-handover-backend
+          property: host
+      - key: INTERNAL_SERVICE_KEY
+        fromService:
+          type: web
+          name: knowledge-handover-backend
+          envVarKey: INTERNAL_SERVICE_KEY
+      - key: WEBHOOK_HMAC_SECRET
+        fromService:
+          type: web
+          name: knowledge-handover-backend
+          envVarKey: WEBHOOK_HMAC_SECRET
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: OPENAI_EMBEDDING_MODEL
+        value: text-embedding-3-small
+      - key: EMBEDDING_PROVIDER
+        value: openai
+      - key: VECTOR_INDEX_NAME
+        value: vector_index
