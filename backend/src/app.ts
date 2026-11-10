@@ -8,7 +8,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { RequestWithRawBody } from "./middleware/internalAuth.js";
 import { apiRouter } from "./routes/api.routes.js";
 import { internalRouter } from "./routes/internal.routes.js";
-import { sendSuccess } from "./utils/response.js";
+import { sendSuccess, sendError } from "./utils/response.js";
 
 const app: Express = express();
 
@@ -39,11 +39,26 @@ app.use(requestLogger);
 
 // Public health check
 app.get("/health", (_req: Request, res: Response) => {
-  const dbConnected = mongoose.connection.readyState === 1;
-  sendSuccess(res, {
+  const isDbReady = mongoose.connection.readyState === 1;
+
+  if (!isDbReady) {
+    return sendError(
+      res,
+      "SERVICE_UNAVAILABLE",
+      "Database connection not ready",
+      503,
+      {
+        status: "degraded",
+        service: "backend",
+        database: "disconnected"
+      }
+    );
+  }
+
+  return sendSuccess(res, {
     status: "ok",
     service: "backend",
-    database: dbConnected ? "connected" : "connecting"
+    database: "connected"
   });
 });
 

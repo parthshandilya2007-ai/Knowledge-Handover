@@ -9,14 +9,6 @@ const io = setupSocketIO(server);
 
 export { io, server };
 
-function sanitizeMongoUri(uri: string): string {
-  try {
-    return uri.replace(/\/\/(.*?):(.*?)@/, "//$1:***@");
-  } catch {
-    return "[REDACTED]";
-  }
-}
-
 // Connect to MongoDB & Start Server
 if (process.env.NODE_ENV !== "test") {
   (async () => {
@@ -29,10 +21,10 @@ if (process.env.NODE_ENV !== "test") {
         socketTimeoutMS: 45000,
         maxPoolSize: 10
       });
-      console.log(`[MongoDB] Connected successfully to ${sanitizeMongoUri(env.MONGODB_URI)}`);
+      console.log("[MongoDB] Connected successfully to database");
       connected = true;
     } catch (err: any) {
-      console.warn(`[MongoDB] Live connection to ${sanitizeMongoUri(env.MONGODB_URI)} failed: ${err.message}`);
+      console.warn(`[MongoDB] Live connection to database failed: ${err.message}`);
       if (process.env.NODE_ENV !== "production") {
         console.log(`[MongoDB] Spawning embedded in-memory MongoDB instance for local development...`);
         try {
@@ -40,7 +32,7 @@ if (process.env.NODE_ENV !== "test") {
           const mongod = await MongoMemoryServer.create();
           const memUri = mongod.getUri();
           await mongoose.connect(memUri);
-          console.log(`[MongoDB] Embedded in-memory database ready at ${memUri}`);
+          console.log("[MongoDB] Embedded in-memory database ready");
           connected = true;
         } catch (memErr: any) {
           console.error(`[MongoDB] In-memory fallback failed: ${memErr.message}`);
