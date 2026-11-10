@@ -24,7 +24,10 @@ def get_mongo_client() -> MongoClient:
 def get_chunks_collection():
   global _indexes_created
   client = get_mongo_client()
-  db = client.get_database()
+  try:
+    db = client.get_default_database(default="knowledge_handover")
+  except Exception:
+    db = client["knowledge_handover"]
   collection = db["chunks"]
   if not _indexes_created:
     try:

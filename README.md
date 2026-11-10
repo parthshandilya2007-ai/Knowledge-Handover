@@ -247,8 +247,14 @@ npm run test:e2e
 3. Connect your GitHub repository. Render reads `render.yaml` to automatically provision:
    - **`knowledge-handover-backend`**: Node.js Express service configured on **`plan: free`** with `STORAGE_DRIVER: gridfs`.
    - **`knowledge-handover-ai`**: Python FastAPI microservice configured on **`plan: free`**.
-4. When prompted by Render, supply only:
-   - `MONGODB_URI`: Your MongoDB Atlas M0 connection string.
+4. When prompted by Render, supply the required manual parameters:
+   - `MONGODB_URI`: Your MongoDB Atlas M0 connection string (e.g. `mongodb+srv://<user>:<password>@cluster0.abc.mongodb.net/knowledge_handover?retryWrites=true&w=majority`).
+   - `TOKEN_ENCRYPTION_KEY`: A 64-character hexadecimal string (32 bytes) for encrypting credentials at rest. You can generate one with:
+     ```bash
+     openssl rand -hex 32
+     # or via Node:
+     node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+     ```
 5. **No OpenAI Key Required:** `OPENAI_API_KEY` defaults to empty and `EMBEDDING_PROVIDER` defaults to `deterministic`. The platform will automatically run using its built-in rule-based fact extraction, deterministic report generation, and **Okapi BM25 lexical retrieval** at **$0 operating cost**.
 6. After deployment completes, copy your live backend URL (e.g. `https://knowledge-handover-backend.onrender.com`).
 

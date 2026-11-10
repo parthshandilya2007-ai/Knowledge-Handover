@@ -9,21 +9,30 @@ const io = setupSocketIO(server);
 
 export { io, server };
 
+function sanitizeMongoUri(uri: string): string {
+  try {
+    return uri.replace(/\/\/(.*?):(.*?)@/, "//$1:***@");
+  } catch {
+    return "[REDACTED]";
+  }
+}
+
 // Connect to MongoDB & Start Server
 if (process.env.NODE_ENV !== "test") {
   (async () => {
     let connected = false;
     try {
       await mongoose.connect(env.MONGODB_URI, {
+        dbName: "knowledge_handover",
         serverSelectionTimeoutMS: 5000,
         connectTimeoutMS: 10000,
         socketTimeoutMS: 45000,
         maxPoolSize: 10
       });
-      console.log(`[MongoDB] Connected successfully to ${env.MONGODB_URI}`);
+      console.log(`[MongoDB] Connected successfully to ${sanitizeMongoUri(env.MONGODB_URI)}`);
       connected = true;
     } catch (err: any) {
-      console.warn(`[MongoDB] Live connection to ${env.MONGODB_URI} failed: ${err.message}`);
+      console.warn(`[MongoDB] Live connection to ${sanitizeMongoUri(env.MONGODB_URI)} failed: ${err.message}`);
       if (process.env.NODE_ENV !== "production") {
         console.log(`[MongoDB] Spawning embedded in-memory MongoDB instance for local development...`);
         try {
