@@ -48,11 +48,14 @@ export function DashboardPage() {
   const totalMembers = projects.reduce((acc, p) => acc + (p.members?.length || 1), 0);
 
   // Recharts data based on real projects
-  const chartData = projects.map((p) => ({
-    name: p.name.length > 12 ? `${p.name.substring(0, 10)}...` : p.name,
-    members: p.members?.length || 1,
-    status: 100 // Ready placeholder until stage 5 extraction
-  }));
+  const chartData = projects.map((p) => {
+    const projName = p?.name || "Project";
+    return {
+      name: projName.length > 12 ? `${projName.substring(0, 10)}...` : projName,
+      members: p?.members?.length || 1,
+      status: 100 // Ready placeholder until stage 5 extraction
+    };
+  });
 
   return (
     <div className="space-y-8">
