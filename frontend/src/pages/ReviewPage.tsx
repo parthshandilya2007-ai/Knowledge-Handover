@@ -5,6 +5,7 @@ import {
   HelpCircle,
   CheckCircle2,
   FileDown,
+  FileText,
   Share2,
   Search,
   History,
@@ -29,6 +30,7 @@ export function ReviewPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingMd, setIsExportingMd] = useState(false);
 
   // 1. Projects
   const { data: projectsData, isLoading: isLoadingProjects } = useQuery<{ projects: Project[] }>({
@@ -189,6 +191,41 @@ export function ReviewPage() {
     }
   };
 
+  // Export Markdown Handler
+  const handleExportMd = async () => {
+    if (!report) return;
+    setIsExportingMd(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1"}/handover/${report._id}/export.md`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to export Markdown document");
+      }
+
+      const text = await response.text();
+      const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Handover_${activeProject?.name || "report"}_v${report.version}.md`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error("Markdown export failed:", err);
+    } finally {
+      setIsExportingMd(false);
+    }
+  };
+
   const isLoading =
     isLoadingProjects ||
     isLoadingTasks ||
@@ -236,6 +273,16 @@ export function ReviewPage() {
               >
                 <FileDown className={`w-4 h-4 text-accent ${isExportingPdf ? "animate-bounce" : ""}`} />
                 {isExportingPdf ? "Generating PDF..." : "Export PDF"}
+              </button>
+
+              <button
+                onClick={handleExportMd}
+                disabled={isExportingMd}
+                className="px-4 py-2 rounded-xl bg-surface hover:bg-surface-border border border-surface-border text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                title="Download Markdown handover snapshot for Notion / GitHub Wiki"
+              >
+                <FileText className={`w-4 h-4 text-accent ${isExportingMd ? "animate-bounce" : ""}`} />
+                {isExportingMd ? "Generating MD..." : "Export Markdown"}
               </button>
 
               <button

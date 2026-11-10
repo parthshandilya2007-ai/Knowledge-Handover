@@ -9,6 +9,7 @@ import {
   approveReport,
   getApprovals,
   exportReportPdf,
+  exportReportMarkdown,
   shareReport,
   getViewLogs,
 } from "../controllers/handover.controller.js";
@@ -25,6 +26,7 @@ export const handoverRouter = Router();
 handoverRouter.use(requireAuth);
 handoverRouter.get("/:id", getHandoverById);
 handoverRouter.get("/:id/export.pdf", exportReportPdf);
+handoverRouter.get("/:id/export.md", exportReportMarkdown);
 handoverRouter.post("/:id/share", shareReport);
 handoverRouter.patch("/:id/items/:itemId", updateReportItem);
 handoverRouter.post("/:id/sections/:key/approve", approveSection);

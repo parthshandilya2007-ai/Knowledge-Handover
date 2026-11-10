@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   BookOpen,
   Printer,
+  FileDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../lib/api/client";
@@ -129,8 +130,78 @@ export function HandoverDashboardPage() {
     return report?.sections.find((s) => s.key === key);
   };
 
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingMd, setIsExportingMd] = useState(false);
+
   const handlePrintDocument = () => {
     window.print();
+  };
+
+  const handleExportPdf = async () => {
+    if (!report) return;
+    setIsExportingPdf(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1"}/handover/${report._id}/export.pdf`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to export PDF stream");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Handover_${activeProject?.name || "report"}_v${report.version}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error("PDF export failed:", err);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const handleExportMd = async () => {
+    if (!report) return;
+    setIsExportingMd(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1"}/handover/${report._id}/export.md`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to export Markdown document");
+      }
+
+      const text = await response.text();
+      const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Handover_${activeProject?.name || "report"}_v${report.version}.md`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error("Markdown export failed:", err);
+    } finally {
+      setIsExportingMd(false);
+    }
   };
 
   if (isLoadingProjects) {
@@ -735,13 +806,33 @@ export function HandoverDashboardPage() {
                     Handover Report Version {report.version} • {report.status.toUpperCase()}
                   </p>
                 </div>
-                <button
-                  onClick={handlePrintDocument}
-                  className="px-4 py-2 rounded-xl bg-surface hover:bg-surface-border border border-surface-border text-white text-xs font-semibold inline-flex items-center gap-2 transition-colors"
-                >
-                  <Printer className="w-4 h-4 text-accent" />
-                  Print / Export Preview
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleExportPdf}
+                    disabled={isExportingPdf}
+                    className="px-3 py-2 rounded-xl bg-surface hover:bg-surface-border border border-surface-border text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                    title="Export formatted PDF"
+                  >
+                    <FileDown className={`w-4 h-4 text-accent ${isExportingPdf ? "animate-bounce" : ""}`} />
+                    {isExportingPdf ? "PDF..." : "Export PDF"}
+                  </button>
+                  <button
+                    onClick={handleExportMd}
+                    disabled={isExportingMd}
+                    className="px-3 py-2 rounded-xl bg-surface hover:bg-surface-border border border-surface-border text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                    title="Export Markdown for Notion / GitHub Wiki"
+                  >
+                    <FileText className={`w-4 h-4 text-accent ${isExportingMd ? "animate-bounce" : ""}`} />
+                    {isExportingMd ? "MD..." : "Export Markdown"}
+                  </button>
+                  <button
+                    onClick={handlePrintDocument}
+                    className="px-3 py-2 rounded-xl bg-surface hover:bg-surface-border border border-surface-border text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <Printer className="w-4 h-4 text-accent" />
+                    Print
+                  </button>
+                </div>
               </div>
 
               {/* All 11 Sections Sequentially */}

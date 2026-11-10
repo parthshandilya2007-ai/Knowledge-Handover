@@ -161,6 +161,24 @@ export async function exportReportPdf(req: AuthenticatedRequest, res: Response):
   }
 }
 
+export async function exportReportMarkdown(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const reportId = req.params.id;
+    const userId = req.user!._id.toString();
+
+    const { markdown, filename } = await handoverService.exportReportMarkdown(reportId, userId);
+
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.status(200).send(markdown);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    const isForbidden = message.startsWith("FORBIDDEN");
+    const isNotFound = message.includes("not found");
+    sendError(res, isForbidden ? "FORBIDDEN" : isNotFound ? "NOT_FOUND" : "EXPORT_FAILED", message, isForbidden ? 403 : isNotFound ? 404 : 500);
+  }
+}
+
 export async function shareReport(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const reportId = req.params.id;
