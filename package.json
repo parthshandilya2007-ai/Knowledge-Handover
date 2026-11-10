@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "description": "Knowledge Handover Platform: Replace the Person, Not the Knowledge",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
     "start:backend": "npm --prefix backend run dev",
     "start:ai": "cd ai-service && .venv\\Scripts\\python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload",
@@ -12,7 +16,9 @@
     "test:e2e": "npx tsx scripts/e2e.ts",
     "test": "npm run test:backend && npm run test:ai && npm run test:e2e",
     "seed": "npx tsx scripts/seed.ts",
-    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "install:frontend": "npm --prefix frontend install",
+    "build:frontend": "npm --prefix frontend install && npm --prefix frontend run build",
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
     "verify:stage0": "npx tsx scripts/verify-stage0.ts",
     "verify:stage2": "npx tsx scripts/verify-stage2.ts"
   }
