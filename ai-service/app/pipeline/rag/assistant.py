@@ -13,13 +13,15 @@ from app.pipeline.rag.prompts import (
 from app.pipeline.rag.retriever import retrieve_authorized_chunks
 from app.schemas.chat import ChatCitation, ChatResponseData
 
+from app.pipeline.rag.bm25 import extract_content_tokens
+
 logger = logging.getLogger(__name__)
 
 
 def _extract_grounded_snippet(text: str, query: str) -> str:
-    """Extracts a sentence or snippet from text that contains query terms."""
+    """Extracts a sentence or snippet from text that contains meaningful query terms."""
     sentences = re.split(r"(?<=[.!?])\s+", text)
-    query_terms = set(re.findall(r"\w+", query.lower()))
+    query_terms = set(extract_content_tokens(query))
 
     best_sentence = ""
     best_overlap = 0
@@ -31,9 +33,9 @@ def _extract_grounded_snippet(text: str, query: str) -> str:
             best_overlap = overlap
             best_sentence = s.strip()
 
-    if best_sentence:
+    if best_sentence and best_overlap > 0:
         return best_sentence
-    return sentences[0].strip() if sentences else text[:160].strip()
+    return ""
 
 
 def synthesize_deterministic_chat_response(

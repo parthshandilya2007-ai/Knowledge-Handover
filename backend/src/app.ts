@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from "express";
+import mongoose from "mongoose";
 import helmet from "helmet";
 import cors from "cors";
 import { env } from "./config/env.js";
@@ -38,7 +39,12 @@ app.use(requestLogger);
 
 // Public health check
 app.get("/health", (_req: Request, res: Response) => {
-  sendSuccess(res, { status: "ok", service: "backend" });
+  const dbConnected = mongoose.connection.readyState === 1;
+  sendSuccess(res, {
+    status: "ok",
+    service: "backend",
+    database: dbConnected ? "connected" : "connecting"
+  });
 });
 
 // Mounted API routes

@@ -14,7 +14,12 @@ if (process.env.NODE_ENV !== "test") {
   (async () => {
     let connected = false;
     try {
-      await mongoose.connect(env.MONGODB_URI, { serverSelectionTimeoutMS: 2000 });
+      await mongoose.connect(env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
+        maxPoolSize: 10
+      });
       console.log(`[MongoDB] Connected successfully to ${env.MONGODB_URI}`);
       connected = true;
     } catch (err: any) {

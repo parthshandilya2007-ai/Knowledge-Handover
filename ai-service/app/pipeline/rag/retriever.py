@@ -1,9 +1,11 @@
 import math
-import re
+import logging
 from typing import Any, Dict, List, Optional
 from app.config import settings
 from app.pipeline.chunk_store import get_chunks_by_project
-from app.pipeline.embedder.embedder import get_embedder, generate_deterministic_vector
+from app.pipeline.rag.bm25 import BM25Index, tokenize
+
+logger = logging.getLogger(__name__)
 
 
 def _cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
@@ -17,16 +19,6 @@ def _cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
     return dot / (norm_a * norm_b)
 
 
-def _keyword_overlap_score(query: str, text: str) -> float:
-    """Computes basic lexical term overlap between query and document text."""
-    query_tokens = set(re.findall(r"\w+", query.lower()))
-    if not query_tokens:
-        return 0.0
-    doc_tokens = set(re.findall(r"\w+", text.lower()))
-    overlap = len(query_tokens.intersection(doc_tokens))
-    return overlap / len(query_tokens)
-
-
 async def retrieve_authorized_chunks(
     project_id: str,
     question: str,
@@ -36,6 +28,8 @@ async def retrieve_authorized_chunks(
     """Retrieves top-k relevant chunks for a question, strictly pre-filtered by allowed source IDs.
 
     Enforces permission-awareness at the retrieval layer.
+    In $0 free mode (no OPENAI_API_KEY): uses Okapi BM25 lexical ranking.
+    When OPENAI_API_KEY is configured: combines BM25 with semantic embedding cosine similarity.
     """
     if not allowed_source_ids:
         return []
@@ -45,28 +39,46 @@ async def retrieve_authorized_chunks(
     if not chunks:
         return []
 
-    # 2. Compute query embedding
+    # 2. Build BM25 index over authorized corpus
+    bm25 = BM25Index(chunks)
+    query_tokens = tokenize(question)
+
+    has_openai = bool(
+        settings.OPENAI_API_KEY
+        and settings.OPENAI_API_KEY.strip()
+        and settings.EMBEDDING_PROVIDER == "openai"
+    )
+
+    if not has_openai:
+        # Grounded BM25 lexical retrieval (Zero-cost, deterministic, no pseudo-semantic claims)
+        scored_results = bm25.search(question, top_k=top_k)
+        return [chunk for score, chunk in scored_results]
+
+    # 3. Hybrid search (OpenAI Embedding Cosine Similarity + BM25 Lexical Score)
+    from app.pipeline.embedder.embedder import get_embedder
+
     embedder = get_embedder()
     query_embeddings = await embedder.embed_texts([question])
-    query_vec = query_embeddings[0] if query_embeddings else generate_deterministic_vector(question)
+    query_vec = query_embeddings[0] if query_embeddings else None
 
-    # 3. Score chunks using combination of semantic cosine similarity and lexical overlap
     scored_chunks = []
-    for ch in chunks:
+    max_bm25 = 1.0
+
+    bm25_scores = [bm25.score_chunk(query_tokens, i) for i in range(len(chunks))]
+    if bm25_scores:
+        max_bm25 = max(max(bm25_scores), 1.0)
+
+    for i, ch in enumerate(chunks):
         ch_vec = ch.get("embedding")
-        text = ch.get("text", "")
-        cos_score = _cosine_similarity(query_vec, ch_vec) if ch_vec else 0.0
-        lex_score = _keyword_overlap_score(question, text)
+        cos_score = _cosine_similarity(query_vec, ch_vec) if (query_vec and ch_vec) else 0.0
+        norm_bm25 = bm25_scores[i] / max_bm25
 
-        # Combined hybrid relevance score
-        combined_score = 0.6 * cos_score + 0.4 * lex_score
-
-        if combined_score > 0.1:  # Basic relevance threshold
+        combined_score = 0.5 * cos_score + 0.5 * norm_bm25
+        if combined_score > 0.05:
             scored_chunks.append((combined_score, ch))
 
-    # Sort descending by score
     scored_chunks.sort(key=lambda x: x[0], reverse=True)
+    if scored_chunks:
+        return [ch for _, ch in scored_chunks[:top_k]]
 
-    top_chunks = [ch for _, ch in scored_chunks[:top_k]]
-    return top_chunks
-
+    return chunks[:top_k]

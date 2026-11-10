@@ -227,35 +227,34 @@ npm run test:e2e
 
 | Service | Hosting Provider | Deployment Config |
 |---|---|---|
-| **Frontend** | Vercel | `frontend/vercel.json` |
-| **Backend API** | Render (Node Web Service) | `render.yaml` |
-| **AI Microservice** | Render (Python Web Service) | `render.yaml` |
-| **Database & Vectors** | MongoDB Atlas | Single M0/M10 Cluster (`docs/VECTOR_INDEX.md`) |
+| **Layer** | Free Hosting / Provider | Deployment Blueprint |
+|---|---|---|
+| **Frontend** | Vercel (Hobby Tier - ₹0) | `frontend/vercel.json` & root `vercel.json` |
+| **Backend API** | Render Free Web Service (₹0) | `render.yaml` (`plan: free`) |
+| **AI Microservice** | Render Free Web Service (₹0) | `render.yaml` (`plan: free`) |
+| **Database & File Storage** | MongoDB Atlas M0 Free (₹0) | Free shared cluster + GridFS for persistent files |
 
 ### 1. MongoDB Atlas Setup (100% Free M0 Tier)
 1. Create a free shared M0 cluster on [MongoDB Atlas](https://cloud.mongodb.com/) ($0/month forever).
 2. Create database `knowledge_handover` and add a database user with password.
 3. In Network Access, allow IP `0.0.0.0/0`.
 4. Copy the connection string (`mongodb+srv://...`).
-5. *(Optional for Vector Search)*: Follow [docs/VECTOR_INDEX.md](docs/VECTOR_INDEX.md) to create the vector search index on the `chunks` collection with:
-   - Dimensions: `1536`
-   - Metric: `cosine`
-   - Filter fields: `projectId`, `sourceId`
+5. **Persistent Document Storage (GridFS):** On Render Free, local disk storage is ephemeral. By setting `STORAGE_DRIVER=gridfs` (configured automatically in `render.yaml`), uploaded documents are stored in MongoDB Atlas collections (`uploads.files` and `uploads.chunks`), guaranteeing complete persistence across restarts without paying for AWS S3 or Cloudinary.
 
 ### 2. Render Deployment (100% Free Blueprint)
 1. Push your repository to GitHub.
 2. In [Render.com](https://render.com), select **New +** $\rightarrow$ **Blueprint**.
 3. Connect your GitHub repository. Render reads `render.yaml` to automatically provision:
-   - **`knowledge-handover-backend`**: Node.js Express service configured on **`plan: free`**.
+   - **`knowledge-handover-backend`**: Node.js Express service configured on **`plan: free`** with `STORAGE_DRIVER: gridfs`.
    - **`knowledge-handover-ai`**: Python FastAPI microservice configured on **`plan: free`**.
 4. When prompted by Render, supply only:
    - `MONGODB_URI`: Your MongoDB Atlas M0 connection string.
-5. **No OpenAI Key Required:** `OPENAI_API_KEY` defaults to empty and `EMBEDDING_PROVIDER` defaults to `deterministic`. The platform will automatically run using its built-in rule-based fact extraction, deterministic report generation, and hash-based unit vectors at **$0 operating cost**.
+5. **No OpenAI Key Required:** `OPENAI_API_KEY` defaults to empty and `EMBEDDING_PROVIDER` defaults to `deterministic`. The platform will automatically run using its built-in rule-based fact extraction, deterministic report generation, and **Okapi BM25 lexical retrieval** at **$0 operating cost**.
 6. After deployment completes, copy your live backend URL (e.g. `https://knowledge-handover-backend.onrender.com`).
 
 ### 3. Vercel Deployment (100% Free Frontend)
 1. In [Vercel](https://vercel.com), click **Add New...** $\rightarrow$ **Project**, and import your GitHub repository.
-2. Under **Root Directory**, click edit and select `frontend`.
+2. Under **Root Directory**, select `frontend` (or leave default if using root `vercel.json`).
 3. Under **Environment Variables**, set:
    - `VITE_API_URL`: `https://<YOUR_RENDER_BACKEND_URL>/api/v1`
    - `VITE_SOCKET_URL`: `https://<YOUR_RENDER_BACKEND_URL>`
@@ -278,11 +277,11 @@ docker-compose up --build
 
 ---
 
-## 11. Known Limitations & Production Enhancements
+## 11. Known Considerations & Production Architecture
 
-1. **Large File Streaming:** In local development, files are stored on disk (`STORAGE_DRIVER=local`). In production environments with horizontal autoscaling, set `STORAGE_DRIVER=s3` or `STORAGE_DRIVER=cloudinary`.
-2. **Cold Starts on Free Tiers:** On Render free instances, initial spinning up may take ~30-50 seconds. Health checks are wired to handle warmup states.
-3. **OpenAI API Key Requirement:** When `OPENAI_API_KEY` is not provided, the system seamlessly transitions to deterministic local synthesis and deterministic embeddings, guaranteeing zero dead buttons and 100% test reliability.
+1. **Persistent Document Storage:** For cloud deployment on Render's ephemeral free containers, `STORAGE_DRIVER=gridfs` persists all uploaded PDFs, DOCXs, and TXTs directly inside MongoDB Atlas M0 at $0 cost. For local development, `STORAGE_DRIVER=local` saves to the `uploads/` directory.
+2. **Cold Starts on Free Tiers:** On Render free web services, instances spin down after inactivity; initial cold starts take ~30-50 seconds. Health checks (`/health` and `/internal/health`) are wired to handle warmup states.
+3. **Lexical BM25 & Zero-Cost RAG:** When `OPENAI_API_KEY` is not provided, the system uses an Okapi BM25 retrieval index for lexical keyword matching, strictly respecting project and source-level permissions without paying for external embedding APIs. When an OpenAI key is provided, hybrid BM25 + cosine similarity retrieval is enabled.
 
 ---
 

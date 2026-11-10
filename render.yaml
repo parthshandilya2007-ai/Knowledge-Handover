@@ -21,7 +21,7 @@ services:
       - key: CLIENT_URL
         value: https://knowledge-handover.vercel.app
       - key: STORAGE_DRIVER
-        value: local
+        value: gridfs
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
