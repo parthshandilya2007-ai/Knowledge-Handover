@@ -9,8 +9,8 @@ export async function getSystemStatus(req: Request, res: Response): Promise<void
   const integrations = {
     openai: {
       configured: Boolean(env.OPENAI_API_KEY && env.OPENAI_API_KEY.trim().length > 0),
-      status: env.OPENAI_API_KEY ? "active" : "setup_required",
-      message: env.OPENAI_API_KEY ? "OpenAI API configured" : "OPENAI_API_KEY is missing. Add key in environment to enable AI analysis."
+      status: env.OPENAI_API_KEY ? "active" : "free_mode",
+      message: env.OPENAI_API_KEY ? "OpenAI API configured" : "Zero-cost deterministic AI engine active ($0 free deployment)"
     },
     github: {
       configured: Boolean(env.GITHUB_TOKEN && env.GITHUB_TOKEN.trim().length > 0),

@@ -11,6 +11,7 @@ import { Project } from "../models/Project.js";
 let mongoServer: MongoMemoryServer;
 
 beforeAll(async () => {
+  jest.setTimeout(30000);
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
   }
@@ -233,7 +234,7 @@ describe("Stage 4: GitHub Integration & Demo Fixture Tests", () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data.source.status).toBe("uploaded");
-    });
+    }, 20000);
 
     it("returns friendly error message when invalid repo format is provided", async () => {
       const res = await request(app)

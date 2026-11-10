@@ -76,7 +76,8 @@ export class InternalClientService {
           "Content-Type": "application/json",
           "X-Internal-Key": this.internalKey
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(5000)
       });
 
       if (!response.ok) {
@@ -96,7 +97,8 @@ export class InternalClientService {
         method: "DELETE",
         headers: {
           "X-Internal-Key": this.internalKey
-        }
+        },
+        signal: AbortSignal.timeout(3000)
       });
 
       if (!response.ok) {

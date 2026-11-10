@@ -50,10 +50,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
               {user && (
                 <div className="flex items-center gap-2 pl-2 border-l border-surface-border">
                   <div className="w-7 h-7 rounded-lg bg-accent/15 border border-accent/30 flex items-center justify-center text-accent text-xs font-semibold">
-                    {user.name.charAt(0).toUpperCase()}
+                    {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                   </div>
                   <span className="text-xs font-medium text-slate-200 hidden md:inline">
-                    {user.name}
+                    {user?.name || "User"}
                   </span>
                 </div>
               )}

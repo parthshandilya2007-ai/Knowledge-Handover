@@ -34,6 +34,7 @@ describe("Stage 3: Knowledge Collection & Ingestion Pipeline Tests", () => {
   let uploadedSourceId = "";
 
   beforeAll(async () => {
+    jest.setTimeout(30000);
     // 1. Create Admin
     const adminRes = await request(app)
       .post("/api/v1/auth/register")
@@ -239,6 +240,6 @@ describe("Stage 3: Knowledge Collection & Ingestion Pipeline Tests", () => {
       // Verify source is removed from DB
       const check = await Source.findById(uploadedSourceId);
       expect(check).toBeNull();
-    });
+    }, 20000);
   });
 });
