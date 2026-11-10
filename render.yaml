@@ -84,3 +84,4 @@ services:
         value: openai
       - key: VECTOR_INDEX_NAME
         value: vector_index
+

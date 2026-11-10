@@ -128,3 +128,4 @@ pipeline = [
 
 > [!IMPORTANT]
 > The `filter` block guarantees that no chunk is ever scored or returned if its `sourceId` is not present in the user's computed `allowedSourceIds`. This satisfies the strict backend security boundary.
+

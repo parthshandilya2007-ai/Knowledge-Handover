@@ -9,18 +9,42 @@ const io = setupSocketIO(server);
 
 export { io, server };
 
-// Connect to MongoDB
+// Connect to MongoDB & Start Server
 if (process.env.NODE_ENV !== "test") {
-  mongoose
-    .connect(env.MONGODB_URI)
-    .then(() => {
+  (async () => {
+    let connected = false;
+    try {
+      await mongoose.connect(env.MONGODB_URI, { serverSelectionTimeoutMS: 2000 });
       console.log(`[MongoDB] Connected successfully to ${env.MONGODB_URI}`);
-    })
-    .catch((err) => {
-      console.warn(`[MongoDB] Connection warning: ${err.message}`);
-    });
+      connected = true;
+    } catch (err: any) {
+      console.warn(`[MongoDB] Live connection to ${env.MONGODB_URI} failed: ${err.message}`);
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[MongoDB] Spawning embedded in-memory MongoDB instance for local development...`);
+        try {
+          const { MongoMemoryServer } = await import("mongodb-memory-server");
+          const mongod = await MongoMemoryServer.create();
+          const memUri = mongod.getUri();
+          await mongoose.connect(memUri);
+          console.log(`[MongoDB] Embedded in-memory database ready at ${memUri}`);
+          connected = true;
+        } catch (memErr: any) {
+          console.error(`[MongoDB] In-memory fallback failed: ${memErr.message}`);
+        }
+      }
+    }
 
-  server.listen(env.PORT, () => {
-    console.log(`[Express] Backend server running on http://localhost:${env.PORT} in ${env.NODE_ENV} mode`);
-  });
+    if (connected) {
+      try {
+        const { seedDemoData } = await import("./utils/seedData.js");
+        await seedDemoData();
+      } catch (seedErr: any) {
+        console.warn(`[Seed] Notice during seed: ${seedErr.message}`);
+      }
+    }
+
+    server.listen(env.PORT, () => {
+      console.log(`[Express] Backend server running on http://localhost:${env.PORT} in ${env.NODE_ENV} mode`);
+    });
+  })();
 }
