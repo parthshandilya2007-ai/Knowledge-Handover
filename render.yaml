@@ -5,7 +5,7 @@ services:
   - type: web
     name: knowledge-handover-backend
     runtime: node
-    plan: starter
+    plan: free
     region: oregon
     branch: main
     rootDir: backend
@@ -46,7 +46,7 @@ services:
   - type: web
     name: knowledge-handover-ai
     runtime: python
-    plan: starter
+    plan: free
     region: oregon
     branch: main
     rootDir: ai-service
