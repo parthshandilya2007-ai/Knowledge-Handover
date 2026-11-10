@@ -51,9 +51,9 @@ export class PdfExportService {
       });
 
       const chunks: Buffer[] = [];
-      doc.on("data", (chunk) => chunks.push(chunk));
+      doc.on("data", (chunk: Buffer | Uint8Array) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
       doc.on("end", () => resolve(Buffer.concat(chunks)));
-      doc.on("error", (err) => reject(err));
+      doc.on("error", (err: Error) => reject(err));
 
       // Title & Header Banner
       doc

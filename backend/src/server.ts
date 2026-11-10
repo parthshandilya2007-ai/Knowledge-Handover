@@ -28,12 +28,16 @@ if (process.env.NODE_ENV !== "test") {
       if (process.env.NODE_ENV !== "production") {
         console.log(`[MongoDB] Spawning embedded in-memory MongoDB instance for local development...`);
         try {
-          const { MongoMemoryServer } = await import("mongodb-memory-server");
-          const mongod = await MongoMemoryServer.create();
-          const memUri = mongod.getUri();
-          await mongoose.connect(memUri);
-          console.log("[MongoDB] Embedded in-memory database ready");
-          connected = true;
+          const memPkg = "mongodb-memory-server";
+          const memModule: any = await import(memPkg);
+          const MongoMemoryServer = memModule.MongoMemoryServer;
+          if (MongoMemoryServer) {
+            const mongod = await MongoMemoryServer.create();
+            const memUri = mongod.getUri();
+            await mongoose.connect(memUri);
+            console.log("[MongoDB] Embedded in-memory database ready");
+            connected = true;
+          }
         } catch (memErr: any) {
           console.error(`[MongoDB] In-memory fallback failed: ${memErr.message}`);
         }

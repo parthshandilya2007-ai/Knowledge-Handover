@@ -9,7 +9,7 @@ services:
     region: oregon
     branch: main
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
     healthCheckPath: /health
     autoDeploy: true
