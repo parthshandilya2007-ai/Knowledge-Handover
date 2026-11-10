@@ -1,5 +1,5 @@
 import os
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,8 +19,18 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
-    EMBEDDING_PROVIDER: str = "openai"
+    EMBEDDING_PROVIDER: str = "deterministic"
     VECTOR_INDEX_NAME: str = "vector_index"
+
+    @field_validator("BACKEND_INTERNAL_URL", mode="before")
+    @classmethod
+    def normalize_backend_url(cls, v: str) -> str:
+        if not v:
+            return "http://localhost:5000"
+        val = str(v).strip().rstrip("/")
+        if not val.startswith("http://") and not val.startswith("https://"):
+            return f"https://{val}"
+        return val
 
 
 settings = Settings()

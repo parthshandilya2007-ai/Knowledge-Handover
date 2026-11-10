@@ -70,7 +70,28 @@ def generate_deterministic_vector(text: str, dim: int = 1536) -> List[float]:
     return vec
 
 
+class DeterministicEmbedder(BaseEmbedder):
+    """
+    Deterministic float vector embedder based on SHA-256 hash.
+    Generates normalized 1536-dimensional unit vectors for completely free local/cloud operation without OpenAI or paid APIs.
+    """
+    def __init__(self, dim: int = 1536):
+        self.dim = dim
+
+    async def embed_texts(self, texts: List[str]) -> List[List[float]]:
+        if not texts:
+            return []
+        return [generate_deterministic_vector(t, self.dim) for t in texts]
+
+
 def get_embedder() -> BaseEmbedder:
+    provider = (settings.EMBEDDING_PROVIDER or "").lower().strip()
+    has_key = bool(settings.OPENAI_API_KEY and settings.OPENAI_API_KEY.strip())
+
+    # If provider is explicitly deterministic/local, or if no OpenAI API key is set, use free deterministic embedder
+    if provider in ("deterministic", "local", "mock", "offline") or not has_key:
+        return DeterministicEmbedder(dim=1536)
+
     return OpenAIEmbedder(
         api_key=settings.OPENAI_API_KEY,
         model=settings.OPENAI_EMBEDDING_MODEL

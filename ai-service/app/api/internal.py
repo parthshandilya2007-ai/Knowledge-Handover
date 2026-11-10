@@ -45,9 +45,9 @@ async def internal_health():
           "service": "ai-service",
           "timestamp": datetime.now(timezone.utc).isoformat(),
           "models": {
-              "chat": settings.OPENAI_MODEL,
-              "embedding": settings.OPENAI_EMBEDDING_MODEL,
-              "provider": settings.EMBEDDING_PROVIDER,
+              "chat": settings.OPENAI_MODEL if settings.OPENAI_API_KEY else "deterministic-rules",
+              "embedding": settings.OPENAI_EMBEDDING_MODEL if settings.OPENAI_API_KEY else "deterministic-sha256",
+              "provider": "openai" if (settings.OPENAI_API_KEY and settings.EMBEDDING_PROVIDER == "openai") else "deterministic",
           },
       },
   }

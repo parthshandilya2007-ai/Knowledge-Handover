@@ -3,7 +3,7 @@ import re
 from typing import Any, Dict, List, Optional
 from app.config import settings
 from app.pipeline.chunk_store import get_chunks_by_project
-from app.pipeline.embedder.embedder import OpenAIEmbedder, generate_deterministic_vector
+from app.pipeline.embedder.embedder import get_embedder, generate_deterministic_vector
 
 
 def _cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
@@ -46,9 +46,7 @@ async def retrieve_authorized_chunks(
         return []
 
     # 2. Compute query embedding
-    embedder = OpenAIEmbedder(
-        api_key=settings.OPENAI_API_KEY, model=settings.OPENAI_EMBEDDING_MODEL
-    )
+    embedder = get_embedder()
     query_embeddings = await embedder.embed_texts([question])
     query_vec = query_embeddings[0] if query_embeddings else generate_deterministic_vector(question)
 

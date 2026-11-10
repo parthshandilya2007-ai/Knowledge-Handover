@@ -75,13 +75,12 @@ services:
           name: knowledge-handover-backend
           envVarKey: WEBHOOK_HMAC_SECRET
       - key: OPENAI_API_KEY
-        sync: false
+        value: ""
       - key: OPENAI_MODEL
         value: gpt-4o-mini
       - key: OPENAI_EMBEDDING_MODEL
         value: text-embedding-3-small
       - key: EMBEDDING_PROVIDER
-        value: openai
+        value: deterministic
       - key: VECTOR_INDEX_NAME
         value: vector_index
-

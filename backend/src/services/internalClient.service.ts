@@ -16,7 +16,10 @@ export class InternalClientService {
   private internalKey: string;
 
   constructor() {
-    this.baseUrl = env.AI_SERVICE_URL.replace(/\/$/, "");
+    const rawUrl = (env.AI_SERVICE_URL || "http://localhost:8000").trim().replace(/\/$/, "");
+    this.baseUrl = rawUrl.startsWith("http://") || rawUrl.startsWith("https://")
+      ? rawUrl
+      : `https://${rawUrl}`;
     this.internalKey = env.INTERNAL_SERVICE_KEY;
   }
 

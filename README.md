@@ -232,27 +232,35 @@ npm run test:e2e
 | **AI Microservice** | Render (Python Web Service) | `render.yaml` |
 | **Database & Vectors** | MongoDB Atlas | Single M0/M10 Cluster (`docs/VECTOR_INDEX.md`) |
 
-### 1. MongoDB Atlas Setup
-1. Create a free M0 cluster on [MongoDB Atlas](https://cloud.mongodb.com/).
-2. Create database `knowledge_handover`.
-3. Follow [docs/VECTOR_INDEX.md](docs/VECTOR_INDEX.md) to create the vector search index on the `chunks` collection with:
+### 1. MongoDB Atlas Setup (100% Free M0 Tier)
+1. Create a free shared M0 cluster on [MongoDB Atlas](https://cloud.mongodb.com/) ($0/month forever).
+2. Create database `knowledge_handover` and add a database user with password.
+3. In Network Access, allow IP `0.0.0.0/0`.
+4. Copy the connection string (`mongodb+srv://...`).
+5. *(Optional for Vector Search)*: Follow [docs/VECTOR_INDEX.md](docs/VECTOR_INDEX.md) to create the vector search index on the `chunks` collection with:
    - Dimensions: `1536`
    - Metric: `cosine`
    - Filter fields: `projectId`, `sourceId`
 
-### 2. Render Deployment (Blueprint)
+### 2. Render Deployment (100% Free Blueprint)
 1. Push your repository to GitHub.
-2. In Render, select **New +** $\rightarrow$ **Blueprint**.
-3. Point to your repository; Render reads `render.yaml` to spin up both `knowledge-handover-backend` and `knowledge-handover-ai`.
-4. Enter your `MONGODB_URI` and optional `OPENAI_API_KEY` when prompted.
-5. Note: Render free tier services sleep on inactivity. Health check paths `/health` and `/internal/health` are configured to keep services active during polling.
+2. In [Render.com](https://render.com), select **New +** $\rightarrow$ **Blueprint**.
+3. Connect your GitHub repository. Render reads `render.yaml` to automatically provision:
+   - **`knowledge-handover-backend`**: Node.js Express service configured on **`plan: free`**.
+   - **`knowledge-handover-ai`**: Python FastAPI microservice configured on **`plan: free`**.
+4. When prompted by Render, supply only:
+   - `MONGODB_URI`: Your MongoDB Atlas M0 connection string.
+5. **No OpenAI Key Required:** `OPENAI_API_KEY` defaults to empty and `EMBEDDING_PROVIDER` defaults to `deterministic`. The platform will automatically run using its built-in rule-based fact extraction, deterministic report generation, and hash-based unit vectors at **$0 operating cost**.
+6. After deployment completes, copy your live backend URL (e.g. `https://knowledge-handover-backend.onrender.com`).
 
-### 3. Vercel Deployment (Frontend)
-1. In Vercel, import the `frontend/` directory.
-2. Set Environment Variables:
+### 3. Vercel Deployment (100% Free Frontend)
+1. In [Vercel](https://vercel.com), click **Add New...** $\rightarrow$ **Project**, and import your GitHub repository.
+2. Under **Root Directory**, click edit and select `frontend`.
+3. Under **Environment Variables**, set:
    - `VITE_API_URL`: `https://<YOUR_RENDER_BACKEND_URL>/api/v1`
    - `VITE_SOCKET_URL`: `https://<YOUR_RENDER_BACKEND_URL>`
-3. Deploy! SPA rewrite rules are handled automatically by `frontend/vercel.json`.
+4. Click **Deploy**. Vercel will build and assign you a free HTTPS domain (e.g., `https://knowledge-handover.vercel.app`).
+5. In Render, set `CLIENT_URL` on `knowledge-handover-backend` to your Vercel URL to allow secure CORS and cookie handling.
 
 ---
 
