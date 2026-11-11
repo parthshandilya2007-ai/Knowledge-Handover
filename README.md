@@ -2,6 +2,11 @@
 
 > **Tagline:** Replace the Person, Not the Knowledge.
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-https%3A%2F%2Fknowledge--handover.vercel.app%2F-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://knowledge-handover.vercel.app/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
+🌐 **Live Application:** [https://knowledge-handover.vercel.app/](https://knowledge-handover.vercel.app/)
+
 A production-style knowledge capture and transfer system for engineering teams. When a developer leaves a team, the platform collects unstructured project artifacts (documents, GitHub commits/issues/PRs, meeting discussions), extracts verified structured facts with verbatim evidence, detects contradictions (e.g. MongoDB vs PostgreSQL), and generates a human-reviewed, permission-aware handover report and interactive AI assistant.
 
 ---
@@ -79,7 +84,7 @@ flowchart TD
 ### 1. Clone & Install Dependencies
 
 ```bash
-git clone https://github.com/your-org/knowledge-handover.git
+git clone https://github.com/parthshandilya2007-ai/Knowledge-Handover.git
 cd knowledge-handover
 
 # Install root & backend dependencies
@@ -133,7 +138,9 @@ Seed the database with real multi-format hackathon artifacts (`README.md`, `arch
 npm run seed
 ```
 
-### Pre-Configured Demo Accounts
+### Pre-Configured Demo Accounts (Live & Local)
+
+You can log in directly at the live deployment **[https://knowledge-handover.vercel.app/](https://knowledge-handover.vercel.app/)** (or in local dev) with these pre-seeded accounts:
 
 | Role | Email | Password | Access Boundary |
 |---|---|---|---|
@@ -200,7 +207,9 @@ npm run test:e2e
 
 ---
 
-## 8. Demo Walkthrough
+## 8. Live Demo Walkthrough
+
+Experience the full end-to-end workflow live at **[https://knowledge-handover.vercel.app/](https://knowledge-handover.vercel.app/)**:
 
 ### 1. View Conflicts and Verification as Project Manager
 1. Log in as `manager@hackathon.dev` (`Manager123!`).
@@ -225,14 +234,12 @@ npm run test:e2e
 
 ### Deployment Overview
 
-| Service | Hosting Provider | Deployment Config |
+| Layer | Provider & Tier | Live Status / Blueprint |
 |---|---|---|
-| **Layer** | Free Hosting / Provider | Deployment Blueprint |
-|---|---|---|
-| **Frontend** | Vercel (Hobby Tier - ₹0) | `frontend/vercel.json` & root `vercel.json` |
+| **Frontend** | Vercel (Hobby Tier - ₹0) | 🟢 **Live:** [https://knowledge-handover.vercel.app/](https://knowledge-handover.vercel.app/) |
 | **Backend API** | Render Free Web Service (₹0) | `render.yaml` (`plan: free`) |
 | **AI Microservice** | Render Free Web Service (₹0) | `render.yaml` (`plan: free`) |
-| **Database & File Storage** | MongoDB Atlas M0 Free (₹0) | Free shared cluster + GridFS for persistent files |
+| **Database & File Storage** | MongoDB Atlas M0 Free (₹0) | Shared cluster + GridFS for persistent files |
 
 ### 1. MongoDB Atlas Setup (100% Free M0 Tier)
 1. Create a free shared M0 cluster on [MongoDB Atlas](https://cloud.mongodb.com/) ($0/month forever).
