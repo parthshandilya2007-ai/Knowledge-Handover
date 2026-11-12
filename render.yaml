@@ -9,7 +9,7 @@ services:
     region: oregon
     branch: main
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
     healthCheckPath: /health
     autoDeploy: true
@@ -21,7 +21,7 @@ services:
       - key: CLIENT_URL
         value: https://knowledge-handover.vercel.app
       - key: STORAGE_DRIVER
-        value: local
+        value: gridfs
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
@@ -33,7 +33,7 @@ services:
       - key: WEBHOOK_HMAC_SECRET
         generateValue: true
       - key: TOKEN_ENCRYPTION_KEY
-        generateValue: true
+        sync: false
       - key: AI_SERVICE_URL
         fromService:
           type: web
@@ -52,7 +52,7 @@ services:
     rootDir: ai-service
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /internal/health
+    healthCheckPath: /health
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION

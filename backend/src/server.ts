@@ -14,20 +14,30 @@ if (process.env.NODE_ENV !== "test") {
   (async () => {
     let connected = false;
     try {
-      await mongoose.connect(env.MONGODB_URI, { serverSelectionTimeoutMS: 2000 });
-      console.log(`[MongoDB] Connected successfully to ${env.MONGODB_URI}`);
+      await mongoose.connect(env.MONGODB_URI, {
+        dbName: "knowledge_handover",
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
+        maxPoolSize: 10
+      });
+      console.log("[MongoDB] Connected successfully to database");
       connected = true;
     } catch (err: any) {
-      console.warn(`[MongoDB] Live connection to ${env.MONGODB_URI} failed: ${err.message}`);
+      console.warn(`[MongoDB] Live connection to database failed: ${err.message}`);
       if (process.env.NODE_ENV !== "production") {
         console.log(`[MongoDB] Spawning embedded in-memory MongoDB instance for local development...`);
         try {
-          const { MongoMemoryServer } = await import("mongodb-memory-server");
-          const mongod = await MongoMemoryServer.create();
-          const memUri = mongod.getUri();
-          await mongoose.connect(memUri);
-          console.log(`[MongoDB] Embedded in-memory database ready at ${memUri}`);
-          connected = true;
+          const memPkg = "mongodb-memory-server";
+          const memModule: any = await import(memPkg);
+          const MongoMemoryServer = memModule.MongoMemoryServer;
+          if (MongoMemoryServer) {
+            const mongod = await MongoMemoryServer.create();
+            const memUri = mongod.getUri();
+            await mongoose.connect(memUri);
+            console.log("[MongoDB] Embedded in-memory database ready");
+            connected = true;
+          }
         } catch (memErr: any) {
           console.error(`[MongoDB] In-memory fallback failed: ${memErr.message}`);
         }

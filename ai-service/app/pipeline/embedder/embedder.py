@@ -73,7 +73,8 @@ def generate_deterministic_vector(text: str, dim: int = 1536) -> List[float]:
 class DeterministicEmbedder(BaseEmbedder):
     """
     Deterministic float vector embedder based on SHA-256 hash.
-    Generates normalized 1536-dimensional unit vectors for completely free local/cloud operation without OpenAI or paid APIs.
+    Generates normalized 1536-dimensional unit vectors for database schema compatibility when running without OpenAI.
+    Note: For document retrieval in free mode, Okapi BM25 lexical retrieval is used rather than hash vector distances.
     """
     def __init__(self, dim: int = 1536):
         self.dim = dim

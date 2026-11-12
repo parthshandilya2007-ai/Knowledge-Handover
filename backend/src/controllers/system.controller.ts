@@ -1,12 +1,19 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import { env } from "../config/env.js";
 import { internalClient } from "../services/internalClient.service.js";
 import { sendSuccess } from "../utils/response.js";
 
 export async function getSystemStatus(req: Request, res: Response): Promise<void> {
   const aiHealth = await internalClient.checkHealth();
+  const dbConnected = mongoose.connection.readyState === 1;
 
   const integrations = {
+    database: {
+      connected: dbConnected,
+      status: dbConnected ? "connected" : "disconnected",
+      message: dbConnected ? "MongoDB Atlas connection active" : "MongoDB disconnected"
+    },
     openai: {
       configured: Boolean(env.OPENAI_API_KEY && env.OPENAI_API_KEY.trim().length > 0),
       status: env.OPENAI_API_KEY ? "active" : "free_mode",
@@ -37,6 +44,7 @@ export async function getSystemStatus(req: Request, res: Response): Promise<void
   };
 
   const allHealthy =
+    dbConnected &&
     integrations.aiService.reachable &&
     integrations.storage.status === "active";
 

@@ -5,8 +5,15 @@ import { User, IUser } from "../models/User.js";
 import { sendError } from "../utils/response.js";
 import { UserPayload } from "../services/auth.service.js";
 
-export interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest<
+  P = Record<string, string>,
+  ResBody = any,
+  ReqBody = any,
+  ReqQuery = Record<string, string | string[] | undefined>
+> extends Request<P, ResBody, ReqBody, ReqQuery> {
   user?: IUser;
+  file?: Express.Multer.File;
+  files?: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] };
 }
 
 export async function requireAuth(

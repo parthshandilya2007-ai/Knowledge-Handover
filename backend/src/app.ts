@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from "express";
+import mongoose from "mongoose";
 import helmet from "helmet";
 import cors from "cors";
 import { env } from "./config/env.js";
@@ -7,7 +8,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { RequestWithRawBody } from "./middleware/internalAuth.js";
 import { apiRouter } from "./routes/api.routes.js";
 import { internalRouter } from "./routes/internal.routes.js";
-import { sendSuccess } from "./utils/response.js";
+import { sendSuccess, sendError } from "./utils/response.js";
 
 const app: Express = express();
 
@@ -38,7 +39,27 @@ app.use(requestLogger);
 
 // Public health check
 app.get("/health", (_req: Request, res: Response) => {
-  sendSuccess(res, { status: "ok", service: "backend" });
+  const isDbReady = mongoose.connection.readyState === 1;
+
+  if (!isDbReady) {
+    return sendError(
+      res,
+      "SERVICE_UNAVAILABLE",
+      "Database connection not ready",
+      503,
+      {
+        status: "degraded",
+        service: "backend",
+        database: "disconnected"
+      }
+    );
+  }
+
+  return sendSuccess(res, {
+    status: "ok",
+    service: "backend",
+    database: "connected"
+  });
 });
 
 // Mounted API routes

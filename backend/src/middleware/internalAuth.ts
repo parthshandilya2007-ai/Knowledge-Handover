@@ -4,7 +4,12 @@ import { env } from "../config/env.js";
 import { sendError } from "../utils/response.js";
 
 // Extend Request type to hold rawBody buffer
-export interface RequestWithRawBody extends Request {
+export interface RequestWithRawBody<
+  P = Record<string, string>,
+  ResBody = any,
+  ReqBody = any,
+  ReqQuery = Record<string, string | string[] | undefined>
+> extends Request<P, ResBody, ReqBody, ReqQuery> {
   rawBody?: Buffer;
 }
 

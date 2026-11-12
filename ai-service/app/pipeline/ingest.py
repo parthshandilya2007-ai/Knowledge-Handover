@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 import httpx
 from app.config import settings
 from app.security import generate_webhook_signature

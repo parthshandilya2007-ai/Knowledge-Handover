@@ -11,10 +11,14 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(16).default("dev-jwt-access-secret-32-chars-long-min"),
   JWT_REFRESH_SECRET: z.string().min(16).default("dev-jwt-refresh-secret-32-chars-long-min"),
   AI_SERVICE_URL: z.string().default("http://localhost:8000"),
-  INTERNAL_SERVICE_KEY: z.string().min(16).default("dev-internal-service-key-secret-12345"),
-  WEBHOOK_HMAC_SECRET: z.string().min(16).default("dev-webhook-hmac-secret-signature-key"),
-  TOKEN_ENCRYPTION_KEY: z.string().length(64).default("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
-  STORAGE_DRIVER: z.enum(["local", "cloudinary", "s3"]).default("local"),
+  INTERNAL_SERVICE_KEY: z.string().min(16, "INTERNAL_SERVICE_KEY must be at least 16 characters long").default("dev-internal-service-key-secret-12345"),
+  WEBHOOK_HMAC_SECRET: z.string().min(16, "WEBHOOK_HMAC_SECRET must be at least 16 characters long").default("dev-webhook-hmac-secret-signature-key"),
+  TOKEN_ENCRYPTION_KEY: z
+    .string()
+    .length(64, "TOKEN_ENCRYPTION_KEY must be a 64-char hex string (32 bytes)")
+    .regex(/^[0-9a-fA-F]{64}$/, "TOKEN_ENCRYPTION_KEY must be a valid 64-character hexadecimal string")
+    .default("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
+  STORAGE_DRIVER: z.enum(["local", "gridfs", "cloudinary", "s3"]).default("local"),
   GITHUB_TOKEN: z.string().optional().default(""),
   OPENAI_API_KEY: z.string().optional().default(""),
   SMTP_HOST: z.string().optional().default(""),

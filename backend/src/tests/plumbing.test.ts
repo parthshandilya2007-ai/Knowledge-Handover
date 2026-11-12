@@ -1,15 +1,39 @@
 import request from "supertest";
 import crypto from "crypto";
+import mongoose from "mongoose";
+import { MongoMemoryServer } from "mongodb-memory-server";
 import { app } from "../app.js";
 import { env } from "../config/env.js";
 
 describe("Stage 0: Internal Plumbing & Security Tests", () => {
+  let mongoServer: MongoMemoryServer;
+
+  afterAll(async () => {
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
+    if (mongoServer) {
+      await mongoServer.stop();
+    }
+  });
+
   describe("Health & System Status", () => {
-    it("should return public health with standard envelope", async () => {
+    it("should return HTTP 503 when database is not connected", async () => {
+      const res = await request(app).get("/health");
+      expect(res.status).toBe(503);
+      expect(res.body.ok).toBe(false);
+      expect(res.body.error.code).toBe("SERVICE_UNAVAILABLE");
+    });
+
+    it("should return HTTP 200 with standard envelope when database is connected", async () => {
+      mongoServer = await MongoMemoryServer.create();
+      await mongoose.connect(mongoServer.getUri());
+
       const res = await request(app).get("/health");
       expect(res.status).toBe(200);
       expect(res.body.ok).toBe(true);
       expect(res.body.data.service).toBe("backend");
+      expect(res.body.data.database).toBe("connected");
     });
 
     it("should return system status with integrations check", async () => {
