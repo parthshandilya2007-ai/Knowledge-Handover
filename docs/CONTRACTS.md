@@ -350,6 +350,7 @@ interface IChatResponse {
 ### 4.8 Sharing, Export & Assistant
 - `POST /api/v1/handover/:id/share` $\rightarrow$ `{ shareUrl, expiresAt }`
 - `GET /api/v1/handover/:id/export.pdf` $\rightarrow$ PDF binary stream
+- `GET /api/v1/handover/:id/export.md` $\rightarrow$ Markdown document stream (`text/markdown`)
 - `POST /api/v1/projects/:id/chat` $\rightarrow$ `{ answer, citations: [], suggestedActions: [], insufficientEvidence: boolean }`
 
 ### 4.9 System & Notifications
@@ -447,10 +448,10 @@ Internal endpoints are protected by shared secrets and are **never** accessible 
   }
   ```
 
-### 7.2 PDF Export Endpoint
-- `GET /api/v1/handover/:id/export.pdf`
-- Streams binary PDF (`application/pdf`) with `%PDF-` header.
-- Enforces viewer-level permission filtering before document generation.
+### 7.2 PDF & Markdown Export Endpoints
+- `GET /api/v1/handover/:id/export.pdf`: Streams binary PDF (`application/pdf`) with `%PDF-` header.
+- `GET /api/v1/handover/:id/export.md`: Streams formatted GitHub-flavored Markdown (`text/markdown; charset=utf-8`) with Table of Contents and verbatim citations for Notion / Wiki export.
+- Both enforce viewer-level permission filtering before document generation.
 
 ---
 
