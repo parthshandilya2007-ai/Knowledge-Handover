@@ -1,6 +1,6 @@
 import math
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from app.config import settings
 from app.pipeline.chunk_store import get_chunks_by_project
 from app.pipeline.rag.bm25 import BM25Index, tokenize
@@ -50,35 +50,56 @@ async def retrieve_authorized_chunks(
     )
 
     if not has_openai:
-        # Grounded BM25 lexical retrieval (Zero-cost, deterministic, no pseudo-semantic claims)
-        scored_results = bm25.search(question, top_k=top_k)
-        return [chunk for score, chunk in scored_results]
+        # Advanced Hybrid BM25 with Domain Synonym Semantic Expansion
+        scored_results = bm25.search_semantic(question, top_k=top_k)
+        if scored_results:
+            return [chunk for score, chunk in scored_results]
+        # Fallback to standard BM25
+        fallback_results = bm25.search(question, top_k=top_k)
+        return [chunk for score, chunk in fallback_results]
 
-    # 3. Hybrid search (OpenAI Embedding Cosine Similarity + BM25 Lexical Score)
+    # 3. Advanced Hybrid Reciprocal Rank Fusion (RRF: Dense Vector Cosine Similarity + BM25 Lexical Ranking)
     from app.pipeline.embedder.embedder import get_embedder
 
     embedder = get_embedder()
     query_embeddings = await embedder.embed_texts([question])
     query_vec = query_embeddings[0] if query_embeddings else None
 
-    scored_chunks = []
-    max_bm25 = 1.0
-
-    bm25_scores = [bm25.score_chunk(query_tokens, i) for i in range(len(chunks))]
-    if bm25_scores:
-        max_bm25 = max(max(bm25_scores), 1.0)
-
+    # Step A: Dense ranking
+    dense_scores: List[Tuple[float, int]] = []
     for i, ch in enumerate(chunks):
         ch_vec = ch.get("embedding")
-        cos_score = _cosine_similarity(query_vec, ch_vec) if (query_vec and ch_vec) else 0.0
-        norm_bm25 = bm25_scores[i] / max_bm25
+        cos = _cosine_similarity(query_vec, ch_vec) if (query_vec and ch_vec) else 0.0
+        dense_scores.append((cos, i))
+    dense_scores.sort(key=lambda x: x[0], reverse=True)
+    dense_rank_map = {idx: rank for rank, (_, idx) in enumerate(dense_scores)}
 
-        combined_score = 0.5 * cos_score + 0.5 * norm_bm25
-        if combined_score > 0.05:
-            scored_chunks.append((combined_score, ch))
+    # Step B: Semantic BM25 ranking
+    bm25_semantic_results = bm25.search_semantic(question, top_k=len(chunks))
+    bm25_rank_map = {
+        chunks.index(ch): rank for rank, (_, ch) in enumerate(bm25_semantic_results)
+    }
 
-    scored_chunks.sort(key=lambda x: x[0], reverse=True)
-    if scored_chunks:
-        return [ch for _, ch in scored_chunks[:top_k]]
+    # Step C: Reciprocal Rank Fusion (RRF k=60) + Architecture Context Boost
+    rrf_scored = []
+    K_RRF = 60
+
+    for i, ch in enumerate(chunks):
+        rank_dense = dense_rank_map.get(i, len(chunks))
+        rank_bm25 = bm25_rank_map.get(i, len(chunks))
+
+        rrf_score = (1.0 / (K_RRF + rank_dense)) + (1.2 / (K_RRF + rank_bm25))
+
+        # Contextual boost: chunks with architectural decisions or technical keywords get high-signal boost
+        text_lower = ch.get("text", "").lower()
+        if any(kw in text_lower for kw in ["database", "postgresql", "mongodb", "architecture", "decision", "risk"]):
+            rrf_score *= 1.15
+
+        if rank_bm25 < len(chunks) or rank_dense < 10:
+            rrf_scored.append((rrf_score, ch))
+
+    rrf_scored.sort(key=lambda x: x[0], reverse=True)
+    if rrf_scored:
+        return [ch for _, ch in rrf_scored[:top_k]]
 
     return chunks[:top_k]
