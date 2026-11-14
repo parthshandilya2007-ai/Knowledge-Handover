@@ -13,22 +13,25 @@ from app.pipeline.rag.prompts import (
 from app.pipeline.rag.retriever import retrieve_authorized_chunks
 from app.schemas.chat import ChatCitation, ChatResponseData
 
-from app.pipeline.rag.bm25 import extract_content_tokens
+from app.pipeline.rag.bm25 import extract_content_tokens, expand_query_tokens
 
 logger = logging.getLogger(__name__)
 
 
 def _extract_grounded_snippet(text: str, query: str) -> str:
-    """Extracts a sentence or snippet from text that contains meaningful query terms."""
+    """Extracts a sentence or snippet from text that contains meaningful query terms or semantic synonyms."""
     sentences = re.split(r"(?<=[.!?])\s+", text)
     query_terms = set(extract_content_tokens(query))
+    expanded_terms = set(expand_query_tokens(query))
 
     best_sentence = ""
     best_overlap = 0
 
     for s in sentences:
         s_terms = set(re.findall(r"\w+", s.lower()))
-        overlap = len(query_terms.intersection(s_terms))
+        direct_overlap = len(query_terms.intersection(s_terms))
+        synonym_overlap = len(expanded_terms.intersection(s_terms))
+        overlap = (direct_overlap * 2) + synonym_overlap
         if overlap > best_overlap:
             best_overlap = overlap
             best_sentence = s.strip()

@@ -647,7 +647,7 @@ export function HandoverDashboardPage() {
                         </button>
                       )}
                     </div>
-                    {sec && <DependencyGraphView items={sec.items} />}
+                    {sec && <DependencyGraphView items={sec.items} report={report} />}
                   </div>
                 );
               })()}
@@ -753,7 +753,7 @@ export function HandoverDashboardPage() {
                         </button>
                       )}
                     </div>
-                    {sec && <FirstWeekPlanView items={sec.items} />}
+                    {sec && <FirstWeekPlanView items={sec.items} report={report} />}
                   </div>
                 );
               })()}
