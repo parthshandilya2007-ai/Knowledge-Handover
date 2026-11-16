@@ -31,4 +31,4 @@ services:
       - key: WEBHOOK_HMAC_SECRET
         generateValue: true
       - key: TOKEN_ENCRYPTION_KEY
-        generateValue: true
+        sync: false
