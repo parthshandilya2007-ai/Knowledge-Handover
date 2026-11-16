@@ -3,6 +3,7 @@ import { Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { SetupRequiredBanner } from "../common/SetupRequiredBanner";
 import { NotificationBell } from "../../features/notifications/NotificationBell";
+import { DemoRoleSwitcher } from "../../features/auth/DemoRoleSwitcher";
 import { useAuth } from "../../features/auth/AuthContext";
 
 export function AppLayout({ children }: { children: ReactNode }) {
@@ -36,12 +37,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <span className="sm:hidden font-bold text-sm text-white">Knowledge Handover</span>
             </div>
 
-            {/* Right section: System health pill + NotificationBell + User chip */}
+            {/* Right section: System health pill + DemoRoleSwitcher + NotificationBell + User chip */}
             <div className="flex items-center gap-3">
               <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface border border-surface-border text-[11px] text-slate-300 font-mono">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>RAG Verified</span>
               </div>
+
+              {/* Demo Persona Switcher for Judges & Reviewers */}
+              <DemoRoleSwitcher />
 
               {/* Notification Center Popover */}
               <NotificationBell />

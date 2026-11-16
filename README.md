@@ -142,11 +142,14 @@ npm run seed
 
 You can log in directly at the live deployment **[https://knowledge-handover.vercel.app/](https://knowledge-handover.vercel.app/)** (or in local dev) with these pre-seeded accounts:
 
-| Role | Email | Password | Access Boundary |
+| Role | Email | Password | Access Boundary & Recommended Test Flow |
 |---|---|---|---|
-| **Admin** | `admin@hackathon.dev` | `Admin123!` | Full visibility (public documents + confidential finance notes) |
-| **Project Manager** | `manager@hackathon.dev` | `Manager123!` | Report reviews, section approval, manager view logs, task management |
-| **Incoming Developer** | `incoming-dev@hackathon.dev` | `Developer123!` | **Strictly permission-filtered:** Cannot see finance notes, compensation, or severance |
+| ⭐ **Hackathon Judge / Evaluator** | `judge@hackathon.dev` | `Judge123!` | **Full Unrestricted Access:** Inspect all 6 sources (including confidential executive finance notes), AI RAG assistant with verbatim citations, PostgreSQL vs MongoDB conflict resolutions, manager audit logs, and PDF export. |
+| **Admin (Lead Architect)** | `admin@hackathon.dev` | `Admin123!` | Full visibility across organization assets, ingestion configuration, public documents + confidential finance notes. |
+| **Project Manager** | `manager@hackathon.dev` | `Manager123!` | Report reviews, section approval, manager view logs, and task management. |
+| **Incoming Developer** | `incoming-dev@hackathon.dev` | `Developer123!` | **Strictly permission-filtered (Zero-Leakage RBAC):** Cannot see finance notes, compensation, or severance. In AI Chat, querying bonus data returns no evidence. |
+
+> **Pro-Tip for Judges:** Use the **1-Click Judge Sign-In** button on the frontend login page, and switch dynamically between `Judge` and `Incoming Developer` using the **Demo Persona Switcher** in the top navigation bar to test the zero-leakage security boundary in real time!
 
 **Demo Project:** `Relay Core Platform`
 

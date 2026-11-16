@@ -61,7 +61,7 @@ async function runSeed() {
   try {
     // 1. Clean existing demo data
     console.log("\n1. Cleaning existing demo records...");
-    const demoEmails = ["admin@hackathon.dev", "manager@hackathon.dev", "incoming-dev@hackathon.dev"];
+    const demoEmails = ["judge@hackathon.dev", "admin@hackathon.dev", "manager@hackathon.dev", "incoming-dev@hackathon.dev"];
     const existingUsers = await User.find({ email: { $in: demoEmails } });
     const userIds = existingUsers.map((u) => u._id);
 
@@ -84,9 +84,17 @@ async function runSeed() {
     // 2. Create Users
     console.log("2. Creating demo users across all roles...");
     const saltRounds = 10;
+    const judgePasswordHash = await bcrypt.hash("Judge123!", saltRounds);
     const adminPasswordHash = await bcrypt.hash("Admin123!", saltRounds);
     const managerPasswordHash = await bcrypt.hash("Manager123!", saltRounds);
     const devPasswordHash = await bcrypt.hash("Developer123!", saltRounds);
+
+    const judge = await User.create({
+      name: "Hackathon Judge (Evaluator)",
+      email: "judge@hackathon.dev",
+      passwordHash: judgePasswordHash,
+      systemRole: "admin",
+    });
 
     const admin = await User.create({
       name: "Alex Chen (Admin)",
@@ -109,6 +117,7 @@ async function runSeed() {
       systemRole: "user",
     });
 
+    console.log(`   - Judge: ${judge.email} (ID: ${judge._id})`);
     console.log(`   - Admin: ${admin.email} (ID: ${admin._id})`);
     console.log(`   - Manager: ${manager.email} (ID: ${manager._id})`);
     console.log(`   - Incoming Dev: ${developer.email} (ID: ${developer._id})`);
@@ -120,6 +129,7 @@ async function runSeed() {
       slug: "hackathon-eng",
       ownerId: admin._id,
       members: [
+        { userId: judge._id, role: "admin", joinedAt: new Date() },
         { userId: admin._id, role: "admin", joinedAt: new Date() },
         { userId: manager._id, role: "project_manager", joinedAt: new Date() },
         { userId: developer._id, role: "developer", joinedAt: new Date() },
@@ -134,6 +144,7 @@ async function runSeed() {
       description: "Core backend collaboration service and real-time synchronization engine for student hackathon collaboration.",
       orgId: org._id,
       members: [
+        { userId: judge._id, role: "manager" },
         { userId: admin._id, role: "manager" },
         { userId: manager._id, role: "manager" },
         { userId: developer._id, role: "viewer" },
@@ -211,7 +222,7 @@ async function runSeed() {
       title: "Executive Headcount & Bonus Allocation",
       status: "ready",
       visibility: "restricted",
-      allowedUserIds: [admin._id],
+      allowedUserIds: [admin._id, judge._id],
       metadata: { originalName: "finance-private-notes.txt", size: financeContent.length, mimetype: "text/plain" },
       createdBy: admin._id,
     });
@@ -673,14 +684,25 @@ async function runSeed() {
       link: `/projects/${project._id}/review`,
     });
 
-    console.log("   - Created 3 audit logs and 2 user notifications.");
+    await Notification.create({
+      userId: judge._id,
+      type: "system",
+      message: "Welcome Hackathon Judge! Full evaluation access unlocked for Relay Core Platform.",
+      link: `/projects/${project._id}/handover`,
+    });
+
+    console.log("   - Created 3 audit logs and 3 user notifications.");
 
     console.log("\n=================================================================");
     console.log("   🎉 SEEDING COMPLETED SUCCESSFULLY!                           ");
     console.log("=================================================================");
     console.log("\n🔑 DEMO USER CREDENTIALS FOR TESTING:");
     console.log("-----------------------------------------------------------------");
-    console.log("Role: ADMIN");
+    console.log("Role: HACKATHON JUDGE / EVALUATOR (Full Access - Recommended)");
+    console.log("  Email:    judge@hackathon.dev");
+    console.log("  Password: Judge123!");
+    console.log("  Access:   Full visibility (public documents + confidential finance notes + RAG)\n");
+    console.log("Role: ADMIN (Lead Architect)");
     console.log("  Email:    admin@hackathon.dev");
     console.log("  Password: Admin123!");
     console.log("  Access:   Full visibility over public & restricted finance notes\n");
@@ -688,7 +710,7 @@ async function runSeed() {
     console.log("  Email:    manager@hackathon.dev");
     console.log("  Password: Manager123!");
     console.log("  Access:   Can approve sections, view logs, manage tasks\n");
-    console.log("Role: INCOMING DEVELOPER");
+    console.log("Role: INCOMING DEVELOPER (Permission-Filtered)");
     console.log("  Email:    incoming-dev@hackathon.dev");
     console.log("  Password: Developer123!");
     console.log("  Access:   Permission-filtered: CANNOT see finance notes or salary bands\n");

@@ -44,6 +44,19 @@ export function RegisterPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-panel border border-surface-border py-8 px-6 shadow-2xl rounded-2xl sm:px-10">
+          {/* Judge Demo Banner */}
+          <div className="mb-5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-xs">
+            <span className="text-amber-200">
+              Judging the platform? Skip registration with pre-seeded demo accounts.
+            </span>
+            <Link
+              to="/login?demo=judge"
+              className="px-2.5 py-1 rounded bg-amber-500 text-slate-950 font-bold text-[11px] shrink-0 hover:bg-amber-400 transition-colors"
+            >
+              Demo Access
+            </Link>
+          </div>
+
           {error && (
             <div className="mb-6 p-3 rounded-lg bg-red-950/40 border border-red-500/50 text-red-200 text-xs">
               {error}

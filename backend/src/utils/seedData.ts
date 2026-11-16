@@ -13,10 +13,65 @@ import { AuditLog } from "../models/AuditLog.js";
 
 const rootDir = process.cwd().endsWith("backend") ? path.resolve(process.cwd(), "..") : process.cwd();
 
+async function ensureDemoUsers(): Promise<void> {
+  try {
+    const saltRounds = 10;
+    const judgePasswordHash = await bcrypt.hash("Judge123!", saltRounds);
+    const adminPasswordHash = await bcrypt.hash("Admin123!", saltRounds);
+    const managerPasswordHash = await bcrypt.hash("Manager123!", saltRounds);
+    const devPasswordHash = await bcrypt.hash("Developer123!", saltRounds);
+
+    const demoDefs = [
+      { email: "judge@hackathon.dev", name: "Hackathon Judge (Evaluator)", passwordHash: judgePasswordHash, orgRole: "admin" as const, projectRole: "manager" as const },
+      { email: "admin@hackathon.dev", name: "Alex Chen (Admin)", passwordHash: adminPasswordHash, orgRole: "admin" as const, projectRole: "manager" as const },
+      { email: "manager@hackathon.dev", name: "Sarah Connor (PM)", passwordHash: managerPasswordHash, orgRole: "project_manager" as const, projectRole: "manager" as const },
+      { email: "incoming-dev@hackathon.dev", name: "Jordan Lee (Incoming Dev)", passwordHash: devPasswordHash, orgRole: "developer" as const, projectRole: "viewer" as const },
+    ];
+
+    const org = await Organization.findOne({ slug: "hackathon-eng" });
+    const project = await Project.findOne({ name: "Relay Core Platform" });
+
+    for (const def of demoDefs) {
+      let u = await User.findOne({ email: def.email });
+      if (!u) {
+        u = await User.create({
+          name: def.name,
+          email: def.email,
+          passwordHash: def.passwordHash,
+        });
+        console.log(`[Seed] Created missing demo user: ${def.email}`);
+      }
+
+      if (org && !org.members.some((m) => m.userId.toString() === u._id.toString())) {
+        org.members.push({ userId: u._id, role: def.orgRole, joinedAt: new Date() });
+        await org.save();
+      }
+
+      if (project && !project.members.some((m) => m.userId.toString() === u._id.toString())) {
+        project.members.push({ userId: u._id, role: def.projectRole, joinedAt: new Date() });
+        await project.save();
+      }
+    }
+
+    if (project) {
+      const judge = await User.findOne({ email: "judge@hackathon.dev" });
+      if (judge) {
+        await Source.updateMany(
+          { projectId: project._id, visibility: "restricted" },
+          { $addToSet: { allowedUserIds: judge._id } }
+        );
+      }
+    }
+  } catch (err: any) {
+    console.warn(`[Seed] ensureDemoUsers warning: ${err.message}`);
+  }
+}
+
 export async function seedDemoData(): Promise<void> {
   const existingCount = await User.countDocuments();
   if (existingCount > 0) {
-    console.log("[Seed] Database already contains records; skipping auto-seed.");
+    console.log("[Seed] Database already contains records; verifying demo user accounts...");
+    await ensureDemoUsers();
     return;
   }
 
@@ -24,9 +79,17 @@ export async function seedDemoData(): Promise<void> {
 
   try {
     const saltRounds = 10;
+    const judgePasswordHash = await bcrypt.hash("Judge123!", saltRounds);
     const adminPasswordHash = await bcrypt.hash("Admin123!", saltRounds);
     const managerPasswordHash = await bcrypt.hash("Manager123!", saltRounds);
     const devPasswordHash = await bcrypt.hash("Developer123!", saltRounds);
+
+    const judge = await User.create({
+      name: "Hackathon Judge (Evaluator)",
+      email: "judge@hackathon.dev",
+      passwordHash: judgePasswordHash,
+      systemRole: "admin",
+    });
 
     const admin = await User.create({
       name: "Alex Chen (Admin)",
@@ -54,6 +117,7 @@ export async function seedDemoData(): Promise<void> {
       slug: "hackathon-eng",
       ownerId: admin._id,
       members: [
+        { userId: judge._id, role: "admin", joinedAt: new Date() },
         { userId: admin._id, role: "admin", joinedAt: new Date() },
         { userId: manager._id, role: "project_manager", joinedAt: new Date() },
         { userId: developer._id, role: "developer", joinedAt: new Date() },
@@ -65,6 +129,7 @@ export async function seedDemoData(): Promise<void> {
       description: "Core backend collaboration service and real-time synchronization engine for student hackathon collaboration.",
       orgId: org._id,
       members: [
+        { userId: judge._id, role: "manager" },
         { userId: admin._id, role: "manager" },
         { userId: manager._id, role: "manager" },
         { userId: developer._id, role: "viewer" },
@@ -159,7 +224,7 @@ export async function seedDemoData(): Promise<void> {
       title: "Executive Headcount & Bonus Allocation",
       status: "ready",
       visibility: "restricted",
-      allowedUserIds: [admin._id],
+      allowedUserIds: [admin._id, judge._id],
       metadata: { originalName: "finance-private-notes.txt", size: financeContent.length, mimetype: "text/plain" },
       createdBy: admin._id,
     });
@@ -571,6 +636,13 @@ export async function seedDemoData(): Promise<void> {
       userId: developer._id,
       type: "report_shared",
       message: "Sarah Connor shared Handover Report v1 for Relay Core Platform with you.",
+      link: `/projects/${project._id}/handover`,
+    });
+
+    await Notification.create({
+      userId: judge._id,
+      type: "system",
+      message: "Welcome Hackathon Judge! Full evaluation access unlocked for Relay Core Platform.",
       link: `/projects/${project._id}/handover`,
     });
 
