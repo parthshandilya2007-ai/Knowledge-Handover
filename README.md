@@ -5,7 +5,7 @@
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-https%3A%2F%2Fknowledge--handover.vercel.app%2F-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://knowledge-handover.vercel.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-🌐 **Live Application:** [https://knowledge-handover.vercel.app/](https://knowledge-handover.vercel.app/)
+🌐 **Live Application:** [https://knowledge-handover.vercel.app/](https://knowledge-handover-bigy.vercel.app/)
 
 A production-style knowledge capture and transfer system for engineering teams. When a developer leaves a team, the platform collects unstructured project artifacts (documents, GitHub commits/issues/PRs, meeting discussions), extracts verified structured facts with verbatim evidence, detects contradictions (e.g. MongoDB vs PostgreSQL), and generates a human-reviewed, permission-aware handover report and interactive AI assistant.
 
