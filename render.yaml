@@ -1,7 +1,5 @@
 services:
-  # -------------------------------------------------------------
-  # Express Backend Service (System of Record & Security Gate)
-  # -------------------------------------------------------------
+  # Temporary demo backend. Uses an in-memory MongoDB; all data is lost on restart/redeploy.
   - type: web
     name: knowledge-handover-backend
     runtime: node
@@ -18,12 +16,12 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: USE_IN_MEMORY_DB
+        value: "true"
       - key: CLIENT_URL
-        value: https://knowledge-handover.vercel.app
+        value: https://knowledge-handover-bigy-am7oy5qj-codelith1.vercel.app
       - key: STORAGE_DRIVER
-        value: gridfs
-      - key: MONGODB_URI
-        sync: false
+        value: local
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
@@ -33,54 +31,4 @@ services:
       - key: WEBHOOK_HMAC_SECRET
         generateValue: true
       - key: TOKEN_ENCRYPTION_KEY
-        sync: false
-      - key: AI_SERVICE_URL
-        fromService:
-          type: web
-          name: knowledge-handover-ai
-          property: host
-
-  # -------------------------------------------------------------
-  # Python FastAPI AI Service (Stateless Intelligence & Chunks)
-  # -------------------------------------------------------------
-  - type: web
-    name: knowledge-handover-ai
-    runtime: python
-    plan: free
-    region: oregon
-    branch: main
-    rootDir: ai-service
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /health
-    autoDeploy: true
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: MONGODB_URI
-        sync: false
-      - key: BACKEND_INTERNAL_URL
-        fromService:
-          type: web
-          name: knowledge-handover-backend
-          property: host
-      - key: INTERNAL_SERVICE_KEY
-        fromService:
-          type: web
-          name: knowledge-handover-backend
-          envVarKey: INTERNAL_SERVICE_KEY
-      - key: WEBHOOK_HMAC_SECRET
-        fromService:
-          type: web
-          name: knowledge-handover-backend
-          envVarKey: WEBHOOK_HMAC_SECRET
-      - key: OPENAI_API_KEY
-        value: ""
-      - key: OPENAI_MODEL
-        value: gpt-4o-mini
-      - key: OPENAI_EMBEDDING_MODEL
-        value: text-embedding-3-small
-      - key: EMBEDDING_PROVIDER
-        value: deterministic
-      - key: VECTOR_INDEX_NAME
-        value: vector_index
+        generateValue: true
