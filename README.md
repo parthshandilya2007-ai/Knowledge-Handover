@@ -9,6 +9,13 @@
 
 A production-style knowledge capture and transfer system for engineering teams. When a developer leaves a team, the platform collects unstructured project artifacts (documents, GitHub commits/issues/PRs, meeting discussions), extracts verified structured facts with verbatim evidence, detects contradictions (e.g. MongoDB vs PostgreSQL), and generates a human-reviewed, permission-aware handover report and interactive AI assistant.
 
+> [!IMPORTANT]
+> ### 🏆 Hackathon Judges & Evaluators Quick Access
+> You can test the full live application instantly without registering or uploading sample files:
+> - **Direct 1-Click Judge Sign-In:** **[https://knowledge-handover.vercel.app/login?demo=judge](https://knowledge-handover.vercel.app/login?demo=judge)**
+> - **Primary Judge Account:** `judge@hackathon.dev` &bull; Password: `Judge123!` *(Full unrestricted visibility across all 6 project sources, confidential finance files, AI RAG with verbatim citations, conflict resolution, and manager logs)*
+> - **Live Zero-Leakage RBAC Testing:** Log in as Judge, inspect sensitive documents, then click the **Demo Persona Switcher** in the top navigation bar to toggle to `incoming-dev@hackathon.dev` (`Developer123!`) to verify database-level confidentiality in real time!
+
 ---
 
 ## 1. Three Core Architectural Pillars
@@ -136,34 +143,99 @@ STORAGE_DRIVER=local
 
 ---
 
-## 5. Pre-Configured Demo Accounts & Judge Evaluation Hub
+## 5. Pre-Configured Demo Credentials & In-Depth Role Breakdown
 
-The platform is pre-seeded with multi-format hackathon artifacts (`README.md`, `architecture-notes.txt`, `project-plan.txt`, meeting notes with PostgreSQL decision, confidential finance notes, and GitHub fixture).
+The platform is pre-seeded with real multi-format hackathon artifacts (`README.md`, `architecture-notes.txt`, `project-plan.txt`, architecture sync notes with a PostgreSQL decision, confidential executive finance notes, and a GitHub fixture).
 
-### 🔑 Demo Credentials Table
+### 🔑 Demo Accounts Quick Reference
 
-| Role | Email | Password | Access Boundary & Recommended Test Flow |
-|---|---|---|---|
-| ⭐ **Hackathon Judge / Evaluator** *(Recommended)* | `judge@hackathon.dev` | `Judge123!` | **Full Unrestricted Access:** Inspect all 6 sources (including confidential executive finance notes), AI RAG assistant with verbatim citations, PostgreSQL vs MongoDB conflict resolutions, manager audit logs, and PDF export. |
-| 🛡️ **Admin (Lead Architect)** | `admin@hackathon.dev` | `Admin123!` | Full visibility across organization assets, ingestion configuration, public documents, and restricted finance notes. |
-| 📋 **Project Manager (PM)** | `manager@hackathon.dev` | `Manager123!` | Report reviews, section approvals, manager view logs, and task management. |
-| 🔒 **Incoming Developer** | `incoming-dev@hackathon.dev` | `Developer123!` | **Strictly permission-filtered (Zero-Leakage RBAC):** Cannot see finance notes, compensation, or severance. In AI Chat, querying bonus data returns zero evidence. |
+| Role / Persona | Email | Password | Org Role | Project Role | Access Scope |
+|---|---|---|---|---|---|
+| ⭐ **Hackathon Judge / Evaluator** *(Recommended)* | `judge@hackathon.dev` | `Judge123!` | `admin` | `manager` | **Full Unrestricted Visibility** (All 6 sources, restricted finance notes, AI RAG, conflict resolution, manager logs) |
+| 🔒 **Incoming Developer** *(RBAC Demo)* | `incoming-dev@hackathon.dev` | `Developer123!` | `developer` | `viewer` | **Strictly Permission-Filtered** (Cannot view confidential finance notes, compensation, or severance; AI filters restricted data) |
+| 🛡️ **Admin (Lead Architect)** | `admin@hackathon.dev` | `Admin123!` | `admin` | `manager` | Full administrative control, organization management, ingestion config, and restricted documents |
+| 📋 **Project Manager (PM)** | `manager@hackathon.dev` | `Manager123!` | `project_manager` | `manager` | Handover section reviews, approvals, human fact-locking, conflict resolution, and manager view audit logs |
 
 **Demo Project:** `Relay Core Platform`  
 **Demo Organization:** `Hackathon Engineering Org`
 
 ```bash
-# To manually re-seed or reset demo fixtures at any time:
+# To re-seed or reset demo fixtures locally at any time:
 npm run seed
 ```
+
+---
+
+### 🎭 In-Depth Persona Breakdown & Testing Guide
+
+#### 1. ⭐ Hackathon Judge / Lead Evaluator (`judge@hackathon.dev` / `Judge123!`)
+- **Persona Context:** Lead Evaluator assessing the platform for the hackathon judging process.
+- **Permissions:** Organization `admin` + Project `manager`. Full unconstrained access across the entire system.
+- **Visible Sources:** All 6 ingested assets, including the confidential note: `Executive Headcount & Bonus Allocation` (`finance-private-notes.txt`).
+- **What to Test with this Account:**
+  - **Unrestricted Knowledge Ingestion:** Navigate to **Knowledge Sources** (`/sources`) to see all uploaded files, meeting notes, and GitHub fixtures.
+  - **Grounded AI RAG with Sensitive Data:** In **AI Assistant** (`/assistant`), ask:
+    > *"What is the executive bonus pool allocation?"*
+    > 
+    > $\rightarrow$ The assistant retrieves the confidential chunk and quotes **"$75,000"** with an interactive `<CitationChip>` pointing to `finance-private-notes.txt`.
+  - **Full Handover Report:** Explore all 11 sections in **Handover Dashboard** (`/handover`), view confidence ratings, and review verbatim citations.
+  - **Knowledge & Dependency Graphs:** Interact with node relationships and architecture topologies.
+  - **Binary Streaming PDF Export:** Click **Export PDF** to generate an evidence-backed handover report with complete citations.
+
+#### 2. 🔒 Incoming Developer (`incoming-dev@hackathon.dev` / `Developer123!`)
+- **Persona Context:** Jordan Lee, a newly joined engineer taking over repository responsibilities from a departing colleague.
+- **Permissions:** Organization `developer` + Project `viewer`. Specifically excluded from `allowedUserIds` on restricted documents.
+- **Access Boundary & Zero-Leakage Guarantee:** Filtered strictly at the MongoDB query layer via `accessService.getAllowedSourceIds()`. Even if the developer attempts direct API calls with valid JWT tokens to restricted source IDs, the system returns `403 Forbidden`.
+- **What to Test with this Account:**
+  - **Zero-Leakage Sources View:** In **Knowledge Sources** (`/sources`), notice that `finance-private-notes.txt` is completely omitted from the list (not just greyed out—never sent to the client).
+  - **Permission-Aware AI Chat:** In **AI Assistant** (`/assistant`), ask the identical question:
+    > *"What is the executive bonus pool allocation?"*
+    > 
+    > $\rightarrow$ The assistant displays an amber security banner: *"I couldn't find evidence for this in the authorised sources."* — proving zero secret leakage across permissions!
+  - **Actionable 5-Day Onboarding Roadmap:** Navigate to `/handover` to view the personalized Day 1 through Day 5 ramp-up schedule designed for incoming engineers.
+
+#### 3. 📋 Project Manager (`manager@hackathon.dev` / `Manager123!`)
+- **Persona Context:** Sarah Connor, Technical Project Manager overseeing team transitions.
+- **Permissions:** Organization `project_manager` + Project `manager`.
+- **What to Test with this Account:**
+  - **Contradiction Resolution:** In **Review & Approvals** (`/review`) under the **Conflicting** tab, observe how the system detected a direct contradiction between the README (specifying MongoDB) and Meeting Notes (specifying PostgreSQL). Test side-by-side reconciliation with audit rationale.
+  - **Human Fact Locking:** Edit any extracted task or decision. Its status becomes `"edited"`, permanently locking it against subsequent AI overwrite.
+  - **Section-by-Section Sign-Offs:** Approve individual handover sections (`Executive Overview`, `System Architecture`, `Tasks & Milestones`).
+  - **Manager View Logs:** Audit which incoming team members have viewed or exported the handover report.
+
+#### 4. 🛡️ Lead Architect / Admin (`admin@hackathon.dev` / `Admin123!`)
+- **Persona Context:** Alex Chen, Lead System Architect and Organization Owner.
+- **Permissions:** Organization `admin` (Owner) + Project `manager`.
+- **What to Test with this Account:**
+  - Workspace management, organization member role promotions, GitHub repository connections, and system diagnostic logs.
+
+---
+
+### 🛡️ Live Zero-Leakage Permission Matrix (Side-by-Side)
+
+| Feature / Action | ⭐ Judge / Admin (`judge@hackathon.dev`) | 🔒 Incoming Dev (`incoming-dev@hackathon.dev`) | Security Enforcement Mechanism |
+|---|---|---|---|
+| **View `finance-private-notes.txt`** | ✅ Visible in Sources list | ❌ Completely omitted | Database query filter (`accessService.getAllowedSourceIds`) |
+| **Direct API `GET /api/v1/sources/:id`** | ✅ 200 OK with document metadata | ❌ 403 Forbidden | `accessService.canViewSource()` security gate |
+| **Query AI: *"What is the bonus pool?"*** | ✅ Returns "$75,000" with citation | ❌ Amber warning: *"No evidence found in authorised sources"* | Vector/BM25 retrieval restricted to allowed chunk IDs only |
+| **Handover Report Sensitive Items** | ✅ Displayed with confidence scores | ❌ Automatically redacted from report view | Handover generator omits items with restricted fact references |
+| **Approve Report Sections** | ✅ Can approve and sign off | ❌ Read-only viewer | RBAC middleware checks project management privileges |
+| **Streaming PDF Report Export** | ✅ Full unredacted export | ✅ Generated without confidential items | PDF streaming engine applies `accessService` query filters |
+
+---
 
 ### 🖥️ Frontend Judge Experience Features
 
 1. **1-Click Auto Sign-In for Judges:** On the [Sign In page (`/login`)](https://knowledge-handover.vercel.app/login), click the prominent **"1-Click Judge Sign In"** button to automatically populate credentials and authenticate instantly without typing.
-2. **Interactive Demo Credentials Panel:** The login page features a dedicated panel showing all 4 accounts with copy buttons, password toggles, and feature checklists.
+2. **Interactive Demo Credentials Panel:** The login page features a dedicated panel showing all 4 accounts with one-click fill buttons, copy-to-clipboard buttons, password visibility toggles, and feature checklists.
 3. **In-App Demo Persona Switcher:** Located in the top navigation bar of every page, allowing judges to toggle between **Judge (Full Visibility)** and **Incoming Dev (Strict RBAC)** with a single click—enabling live verification of zero-leakage security boundaries without logging out.
-4. **Homepage Evaluation Hub:** [Landing Page (`/`)](https://knowledge-handover.vercel.app/) contains a direct **"1-Click Judge Access"** CTA and an interactive credentials showcase.
-5. **Registration Bypass Banner:** Hackathon judges visiting `/register` are guided with a banner to skip registration and use pre-seeded accounts.
+4. **URL Query Parameter Support:** Direct links auto-fill credentials on arrival:
+   - Judge Access: `/login?demo=judge`
+   - Incoming Developer: `/login?demo=incoming-dev`
+   - Project Manager: `/login?demo=manager`
+   - Lead Architect: `/login?demo=admin`
+5. **Homepage Evaluation Hub:** [Landing Page (`/`)](https://knowledge-handover.vercel.app/) contains a direct **"1-Click Judge Access"** CTA and an interactive credentials showcase.
+6. **Registration Bypass Banner:** Hackathon judges visiting `/register` are guided with a banner to skip registration and use pre-seeded accounts.
 
 ---
 
